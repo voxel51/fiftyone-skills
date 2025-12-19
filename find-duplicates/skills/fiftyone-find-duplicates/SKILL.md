@@ -257,6 +257,13 @@ Use `get_operator_schema()` to see full parameters:
 - Cause: Brain plugin not installed
 - Solution: Install with `download_plugin()` and `enable_plugin()`
 
+**Error: "Missing dependency" (e.g., torch, tensorflow)**
+- The MCP server detects missing dependencies automatically
+- You'll receive structured error with package name and install command
+- **Auto-install**: Offer to run the install command for the user
+- Example: `pip install torch torchvision`
+- After installation, retry the operator
+
 **Similarity computation is slow**
 - Use faster model: `mobilenet-v2-imagenet-torch`
 - Use GPU if available
