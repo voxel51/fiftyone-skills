@@ -109,7 +109,7 @@ Claude will automatically load the skill instructions and execute the full workf
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  FiftyOne MCP Server (16 tools)                            │
+│  FiftyOne MCP Server (16 tools)                             │
 │  • Dataset management (list, load, summarize)               │
 │  • Operator execution (80+ FiftyOne operators)              │
 │  • Plugin management (install, enable, discover)            │
@@ -119,7 +119,7 @@ Claude will automatically load the skill instructions and execute the full workf
                               │ orchestrates
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│  FiftyOne Skills (SKILL.md files)                          │
+│  FiftyOne Skills (SKILL.md files)                           │
 │  • Step-by-step workflow instructions                       │
 │  • Key directives (ALWAYS/NEVER rules)                      │
 │  • Concrete examples and troubleshooting                    │
