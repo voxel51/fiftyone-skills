@@ -49,12 +49,27 @@ Look for patterns that indicate grouped data:
 - Mixed media types that should be grouped (images + point clouds)
 
 ### 4. Confirm before importing
-Present findings to user and get confirmation before creating the dataset.
+Present findings to user and **explicitly ask for confirmation** before creating the dataset.
+Always end your scan summary with a clear question like:
+- "Proceed with import?"
+- "Should I create the dataset with these settings?"
 
-### 5. Validate after import
+**Wait for user response before proceeding.** Do not create the dataset until the user confirms.
+
+### 5. Check for existing datasets
+Before creating a dataset, check if the proposed name already exists:
+```python
+list_datasets()
+```
+If the dataset name exists, ask the user:
+- **Overwrite**: Delete existing and create new
+- **Rename**: Use a different name (suggest alternatives like `dataset-name-v2`)
+- **Abort**: Cancel the import
+
+### 6. Validate after import
 Compare imported sample count with source file count. Report any discrepancies.
 
-### 6. Report errors minimally to user
+### 7. Report errors minimally to user
 Keep error messages simple for the user. Use detailed error info internally to diagnose issues.
 
 ## Complete Workflow
@@ -175,10 +190,38 @@ Proposed Configuration:
   - Default slice: front
   - Label field: ground_truth
 
-Proceed with import?
+Proceed with import? (yes/no)
 ```
 
-### Step 6: Create Dataset
+**IMPORTANT:** Wait for user confirmation before proceeding to the next step. Do not create the dataset until the user explicitly confirms.
+
+### Step 6: Check for Existing Dataset
+
+Before creating, check if the dataset name already exists:
+
+```python
+# Check existing datasets
+list_datasets()
+```
+
+If the proposed dataset name exists in the list:
+1. Inform the user: "A dataset named 'my-dataset' already exists with X samples."
+2. Ask for their preference:
+   - **Overwrite**: Delete existing dataset first
+   - **Rename**: Suggest alternatives (e.g., `my-dataset-v2`, `my-dataset-20240107`)
+   - **Abort**: Cancel the import
+
+If user chooses to overwrite:
+```python
+# Delete existing dataset
+set_context(dataset_name="my-dataset")
+execute_operator(
+    operator_uri="@voxel51/utils/delete_dataset",
+    params={"name": "my-dataset"}
+)
+```
+
+### Step 7: Create Dataset
 
 ```python
 # Create the dataset
@@ -194,7 +237,7 @@ execute_operator(
 set_context(dataset_name="my-dataset")
 ```
 
-### Step 7A: Import Simple Dataset (No Groups)
+### Step 8A: Import Simple Dataset (No Groups)
 
 For flat datasets without grouping:
 
@@ -222,7 +265,7 @@ execute_operator(
 )
 ```
 
-### Step 7B: Import Grouped Dataset (Multimodal)
+### Step 8B: Import Grouped Dataset (Multimodal)
 
 For multimodal data with groups, use Python directly. Guide the user:
 
@@ -274,7 +317,7 @@ dataset.add_samples(samples)
 print(f"Added {len(dataset)} samples in {len(dataset.distinct('group.id'))} groups")
 ```
 
-### Step 8: Import Labels for Grouped Dataset
+### Step 9: Import Labels for Grouped Dataset
 
 After creating the grouped dataset, import labels:
 
@@ -291,7 +334,7 @@ execute_operator(
 )
 ```
 
-### Step 9: Validate Import
+### Step 10: Validate Import
 
 ```python
 # Load and verify
@@ -306,7 +349,7 @@ Compare:
 - Groups created vs expected
 - Labels imported vs annotation count
 
-### Step 10: Launch App and View
+### Step 11: Launch App and View
 
 ```python
 launch_app(dataset_name="my-dataset")
