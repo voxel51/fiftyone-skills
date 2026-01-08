@@ -48,7 +48,36 @@ Look for patterns that indicate grouped data:
 - Filename patterns with common prefixes (e.g., `scene_001_left.jpg`, `scene_001_right.jpg`)
 - Mixed media types that should be grouped (images + point clouds)
 
-### 4. Confirm before importing
+### 4. Detect and install required packages
+Many specialized dataset formats require external Python packages. After detecting the format:
+
+1. **Identify required packages** based on the detected format
+2. **Check if packages are installed** using `pip show <package>`
+3. **Search for installation instructions** if needed (use web search or FiftyOne docs)
+4. **Ask user for permission** before installing any packages
+5. **Install required packages** with `pip install <package>`
+6. **Verify installation** before proceeding
+
+**Common format-to-package mappings:**
+
+| Dataset Format | Required Package(s) | Install Command |
+|---------------|---------------------|-----------------|
+| PandaSet | `pandaset-devkit` | `pip install pandaset-devkit` |
+| nuScenes | `nuscenes-devkit` | `pip install nuscenes-devkit` |
+| Waymo Open | `waymo-open-dataset-tf` | See Waymo docs |
+| Argoverse | `argoverse-api` | `pip install argoverse` |
+| KITTI 3D | `pykitti` | `pip install pykitti` |
+| Lyft L5 | `l5kit` | `pip install l5kit` |
+| A2D2 | `a2d2` | See Audi docs |
+
+**Dynamic package discovery:**
+If the format is not in the table above:
+1. Search FiftyOne documentation for the format name
+2. Search PyPI for `<format-name>-devkit` or `<format-name>-sdk`
+3. Search web for "FiftyOne import <format-name>"
+4. Present findings to user with installation options
+
+### 5. Confirm before importing
 Present findings to user and **explicitly ask for confirmation** before creating the dataset.
 Always end your scan summary with a clear question like:
 - "Proceed with import?"
@@ -56,7 +85,7 @@ Always end your scan summary with a clear question like:
 
 **Wait for user response before proceeding.** Do not create the dataset until the user confirms.
 
-### 5. Check for existing datasets
+### 6. Check for existing datasets
 Before creating a dataset, check if the proposed name already exists:
 ```python
 list_datasets()
@@ -66,10 +95,10 @@ If the dataset name exists, ask the user:
 - **Rename**: Use a different name (suggest alternatives like `dataset-name-v2`)
 - **Abort**: Cancel the import
 
-### 6. Validate after import
+### 7. Validate after import
 Compare imported sample count with source file count. Report any discrepancies.
 
-### 7. Report errors minimally to user
+### 8. Report errors minimally to user
 Keep error messages simple for the user. Use detailed error info internally to diagnose issues.
 
 ## Complete Workflow
@@ -124,7 +153,55 @@ Identify label format from file patterns:
 | `.dcm` DICOM files | DICOM | `DICOM` |
 | `.tiff` with geo metadata | GeoTIFF | `GeoTIFF` |
 
-### Step 4: Detect Grouping Pattern
+**Specialized Autonomous Driving Formats (require external packages):**
+
+| Directory Pattern | Format | Required Package |
+|------------------|--------|------------------|
+| `camera/`, `lidar/`, `annotations/cuboids/` with `.pkl.gz` | PandaSet | `pandaset-devkit` |
+| `samples/`, `sweeps/`, `v1.0-*` folders | nuScenes | `nuscenes-devkit` |
+| `segment-*` with `.tfrecord` files | Waymo Open | `waymo-open-dataset-tf` |
+| `argoverse-tracking/` structure | Argoverse | `argoverse-api` |
+| `training/`, `testing/` with `calib/`, `velodyne/` | KITTI 3D | `pykitti` |
+| `scenes/`, `aerial_map/` | Lyft L5 | `l5kit` |
+
+### Step 4: Detect Required Packages
+
+After identifying the format, check if external packages are needed:
+
+```bash
+# Check if package is installed
+pip show pandaset-devkit
+
+# If not installed, search for installation instructions
+# Use web search or check FiftyOne documentation
+```
+
+**If packages are required:**
+
+1. **Inform user** what packages are needed and why
+2. **Ask for permission** to install:
+   ```
+   This dataset appears to be in PandaSet format, which requires the `pandaset-devkit` package.
+
+   Would you like me to:
+   - Install `pandaset-devkit` (recommended)
+   - Search for alternative import methods
+   - Abort and let you install manually
+   ```
+3. **Install with pip** if user approves:
+   ```bash
+   pip install pandaset-devkit
+   ```
+4. **Verify installation**:
+   ```bash
+   pip show pandaset-devkit
+   ```
+5. **Search for import code** if needed:
+   - Check FiftyOne documentation for dataset-specific importers
+   - Search for example code on how to use the devkit with FiftyOne
+   - Adapt the import code to the specific dataset structure
+
+### Step 5: Detect Grouping Pattern
 
 Determine if data should be grouped:
 
@@ -162,7 +239,7 @@ Detection: Common prefix = group ID, suffix = slice name
 ```
 Detection: Single media type, no clear grouping pattern
 
-### Step 5: Present Findings to User
+### Step 6: Present Findings to User
 
 Before importing, present a clear summary:
 
@@ -195,7 +272,7 @@ Proceed with import? (yes/no)
 
 **IMPORTANT:** Wait for user confirmation before proceeding to the next step. Do not create the dataset until the user explicitly confirms.
 
-### Step 6: Check for Existing Dataset
+### Step 7: Check for Existing Dataset
 
 Before creating, check if the dataset name already exists:
 
@@ -221,7 +298,7 @@ execute_operator(
 )
 ```
 
-### Step 7: Create Dataset
+### Step 8: Create Dataset
 
 ```python
 # Create the dataset
@@ -237,7 +314,7 @@ execute_operator(
 set_context(dataset_name="my-dataset")
 ```
 
-### Step 8A: Import Simple Dataset (No Groups)
+### Step 9A: Import Simple Dataset (No Groups)
 
 For flat datasets without grouping:
 
@@ -265,7 +342,7 @@ execute_operator(
 )
 ```
 
-### Step 8B: Import Grouped Dataset (Multimodal)
+### Step 9B: Import Grouped Dataset (Multimodal)
 
 For multimodal data with groups, use Python directly. Guide the user:
 
@@ -317,9 +394,58 @@ dataset.add_samples(samples)
 print(f"Added {len(dataset)} samples in {len(dataset.distinct('group.id'))} groups")
 ```
 
-### Step 9: Import Labels for Grouped Dataset
+### Step 9C: Import Specialized Format Dataset
 
-After creating the grouped dataset, import labels:
+For datasets requiring external packages (PandaSet, nuScenes, etc.), use the devkit to load data and convert to FiftyOne format.
+
+**General approach:**
+1. Search FiftyOne documentation or web for the specific import method
+2. Use the devkit to load the raw data
+3. Convert to FiftyOne samples with proper grouping
+4. Add 3D labels (cuboids, segmentation) to the samples
+
+**Example: PandaSet Import**
+```python
+import fiftyone as fo
+from pandaset import DataSet
+
+# Load with pandaset devkit
+pandaset = DataSet("/path/to/pandaset")
+
+# Create FiftyOne dataset with groups
+dataset = fo.Dataset("pandaset", persistent=True)
+dataset.add_group_field("group", default="front_camera")
+
+samples = []
+for scene in pandaset.scenes():
+    scene.load()
+
+    for frame_idx in range(len(scene.lidar.data)):
+        group = fo.Group()
+
+        # Add camera images
+        for cam_name in scene.camera.keys():
+            samples.append(fo.Sample(
+                filepath=scene.camera[cam_name].filepaths[frame_idx],
+                group=group.element(cam_name)
+            ))
+
+        # Add lidar (save as PCD or use pickle path)
+        # ... handle lidar data ...
+
+dataset.add_samples(samples)
+```
+
+**Dynamic Import Discovery:**
+If no example exists for the format:
+1. Search: "FiftyOne <format-name> import example"
+2. Search: "<format-name> devkit python example"
+3. Read the devkit documentation to understand data structure
+4. Build custom import code based on the devkit API
+
+### Step 10: Import Labels (Optional)
+
+If labels weren't imported with the specialized format, add them separately:
 
 ```python
 # For COCO labels that reference filepaths
@@ -334,7 +460,7 @@ execute_operator(
 )
 ```
 
-### Step 10: Validate Import
+### Step 11: Validate Import
 
 ```python
 # Load and verify
@@ -349,7 +475,7 @@ Compare:
 - Groups created vs expected
 - Labels imported vs annotation count
 
-### Step 11: Launch App and View
+### Step 12: Launch App and View
 
 ```python
 launch_app(dataset_name="my-dataset")
