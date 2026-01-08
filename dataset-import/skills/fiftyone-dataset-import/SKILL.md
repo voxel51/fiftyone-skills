@@ -70,6 +70,14 @@ Many specialized dataset formats require external Python packages. After detecti
 | Lyft L5 | `l5kit` | `pip install l5kit` |
 | A2D2 | `a2d2` | See Audi A2D2 docs |
 
+**Additional packages for 3D processing:**
+
+| Purpose | Package Name | Install Command |
+|---------|--------------|-----------------|
+| Point cloud conversion to PCD | `open3d` | `pip install open3d` |
+| Point cloud processing | `pyntcloud` | `pip install pyntcloud` |
+| LAS/LAZ point clouds | `laspy` | `pip install laspy` |
+
 **Installation methods (in order of preference):**
 
 1. **PyPI** - Standard pip install:
@@ -149,12 +157,25 @@ find /path/to/data -maxdepth 2 -type d
 
 # Sample some files
 ls -la /path/to/data/* | head -20
+
+# IMPORTANT: Scan for ALL annotation/label directories
+ls -la /path/to/data/annotations/ 2>/dev/null || ls -la /path/to/data/labels/ 2>/dev/null
 ```
 
 Build an inventory of:
 - Media files by type (images, videos, point clouds, 3D)
-- Label files by format (JSON, XML, TXT, YAML)
+- Label files by format (JSON, XML, TXT, YAML, PKL)
 - Directory structure (flat vs nested vs scene-based)
+- **ALL annotation types present** (cuboids, segmentation, tracking, etc.)
+
+**For 3D/Autonomous Driving datasets, specifically check:**
+```bash
+# List all annotation subdirectories
+find /path/to/data -type d -name "annotations" -o -name "labels" | xargs -I {} ls -la {}
+
+# Sample an annotation file to understand its structure
+python3 -c "import pickle, gzip; print(pickle.load(gzip.open('path/to/annotation.pkl.gz', 'rb'))[:2])"
+```
 
 ### Step 2: Identify Media Types
 
@@ -299,14 +320,14 @@ Detection: Single media type, no clear grouping pattern
 
 ### Step 6: Present Findings to User
 
-Before importing, present a clear summary:
+Before importing, present a clear summary that includes **ALL detected labels**:
 
 ```
 Scan Results for /path/to/data:
 
 Media Found:
   - 3,000 images (.jpg, .png)
-  - 1,000 point clouds (.pcd)
+  - 1,000 point clouds (.pkl.gz → will convert to .pcd)
   - 0 videos
 
 Grouping Detected:
@@ -314,21 +335,35 @@ Grouping Detected:
   - Groups: 1,000 scenes
   - Slices: left (image), right (image), front (image), lidar (point-cloud)
 
-Labels Detected:
-  - Format: COCO Detection
-  - File: annotations/instances.json
-  - Classes: 10 (car, pedestrian, cyclist, ...)
+ALL Labels Detected:
+  ├── cuboids/           (3D bounding boxes, 1,000 files)
+  │   └── Format: pickle, Fields: label, position, dimensions, rotation, track_id
+  ├── semseg/            (Semantic segmentation, 1,000 files)
+  │   └── Format: pickle, point-wise class labels
+  └── instances.json     (2D detections, COCO format)
+      └── Classes: 10 (car, pedestrian, cyclist, ...)
+
+Required Packages:
+  - ✅ pandaset (installed)
+  - ⚠️ open3d (needed for PCD conversion) → pip install open3d
 
 Proposed Configuration:
   - Dataset name: my-dataset
   - Type: Grouped (multimodal)
-  - Default slice: front
-  - Label field: ground_truth
+  - Default slice: front_camera
+  - Labels to import:
+    - detections_3d (from cuboids/)
+    - point_labels (from semseg/)
+    - detections (from instances.json)
 
 Proceed with import? (yes/no)
 ```
 
-**IMPORTANT:** Wait for user confirmation before proceeding to the next step. Do not create the dataset until the user explicitly confirms.
+**IMPORTANT:**
+- List ALL annotation types found during the scan
+- Show the format/structure of each label type
+- Indicate which labels will be imported and how
+- Wait for user confirmation before proceeding
 
 ### Step 7: Check for Existing Dataset
 
@@ -452,46 +487,201 @@ dataset.add_samples(samples)
 print(f"Added {len(dataset)} samples in {len(dataset.distinct('group.id'))} groups")
 ```
 
-### Step 9C: Import Specialized Format Dataset
+### Step 9C: Import Specialized Format Dataset (3D/Autonomous Driving)
 
 For datasets requiring external packages (PandaSet, nuScenes, etc.), use the devkit to load data and convert to FiftyOne format.
 
 **General approach:**
 1. Search FiftyOne documentation or web for the specific import method
 2. Use the devkit to load the raw data
-3. Convert to FiftyOne samples with proper grouping
-4. Add 3D labels (cuboids, segmentation) to the samples
+3. **Convert point clouds to PCD format** (FiftyOne requires `.pcd` files)
+4. **Create `fo.Scene` objects** for 3D visualization with point clouds
+5. Convert to FiftyOne samples with proper grouping
+6. **Import ALL detected labels** (cuboids, segmentation, etc.) found during scan
 
-**Example: PandaSet Import**
+#### Converting Point Clouds to PCD
+
+Many autonomous driving datasets store LiDAR data in proprietary formats (`.pkl.gz`, `.bin`, `.npy`). Convert to PCD for FiftyOne:
+
+```python
+import numpy as np
+import open3d as o3d
+from pathlib import Path
+
+def convert_to_pcd(points, output_path):
+    """
+    Convert point cloud array to PCD file.
+
+    Args:
+        points: numpy array of shape (N, 3) or (N, 4) with XYZ or XYZI
+        output_path: path to save .pcd file
+    """
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points[:, :3])
+
+    # If intensity is available, store as colors (grayscale)
+    if points.shape[1] >= 4:
+        intensity = points[:, 3]
+        intensity_normalized = (intensity - intensity.min()) / (intensity.max() - intensity.min() + 1e-8)
+        colors = np.stack([intensity_normalized] * 3, axis=1)
+        pcd.colors = o3d.utility.Vector3dVector(colors)
+
+    o3d.io.write_point_cloud(str(output_path), pcd)
+    return output_path
+```
+
+**Note:** Install open3d if needed: `pip install open3d`
+
+#### Creating fo.Scene for 3D Visualization
+
+For each LiDAR frame, create an `fo.Scene` that references the PCD file:
+
 ```python
 import fiftyone as fo
-from pandaset import DataSet
 
-# Load with pandaset devkit
-pandaset = DataSet("/path/to/pandaset")
+# Create a 3D scene for the point cloud
+scene = fo.Scene()
 
-# Create FiftyOne dataset with groups
+# Add point cloud to the scene
+scene.add_point_cloud(
+    name="lidar",
+    pcd_path="/path/to/frame.pcd",
+    flag_for_projection=True  # Enable projection to camera views
+)
+
+# Create sample with the scene
+sample = fo.Sample(filepath="/path/to/scene.fo3d")  # Or use scene directly
+sample["scene"] = scene
+```
+
+#### Importing ALL Labels Detected During Scan
+
+During the folder scan (Step 1), identify ALL label types present:
+
+```bash
+# Example: List all annotation directories/files
+ls -la /path/to/dataset/annotations/
+# Output might show: cuboids/, semseg/, tracking/, instances.json, etc.
+```
+
+**Map detected labels to FiftyOne label types:**
+
+| Annotation Type | FiftyOne Label Type | Field Name |
+|-----------------|---------------------|------------|
+| 3D Cuboids/Bounding Boxes | `fo.Detection` with 3D attributes | `detections_3d` |
+| Semantic Segmentation | `fo.Segmentation` | `segmentation` |
+| Instance Segmentation | `fo.Detections` with masks | `instances` |
+| Tracking IDs | Add `track_id` to detections | `tracks` |
+| Classification | `fo.Classification` | `classification` |
+| Keypoints/Pose | `fo.Keypoints` | `keypoints` |
+
+**Example: PandaSet Full Import with Labels**
+
+```python
+import fiftyone as fo
+import numpy as np
+import open3d as o3d
+from pathlib import Path
+import gzip
+import pickle
+
+data_path = Path("/path/to/pandaset")
+pcd_output_dir = data_path / "pcd_converted"
+pcd_output_dir.mkdir(exist_ok=True)
+
+# Create dataset with groups
 dataset = fo.Dataset("pandaset", persistent=True)
 dataset.add_group_field("group", default="front_camera")
 
+# Get camera names
+camera_names = [d.name for d in (data_path / "camera").iterdir() if d.is_dir()]
+frame_count = len(list((data_path / "camera" / "front_camera").glob("*.jpg")))
+
+# Check what labels exist
+labels_dir = data_path / "annotations"
+available_labels = [d.name for d in labels_dir.iterdir() if d.is_dir()]
+print(f"Found label types: {available_labels}")  # e.g., ['cuboids', 'semseg']
+
 samples = []
-for scene in pandaset.scenes():
-    scene.load()
+for frame_idx in range(frame_count):
+    frame_id = f"{frame_idx:02d}"
+    group = fo.Group()
 
-    for frame_idx in range(len(scene.lidar.data)):
-        group = fo.Group()
+    # === Add camera images ===
+    for cam_name in camera_names:
+        img_path = data_path / "camera" / cam_name / f"{frame_id}.jpg"
+        if img_path.exists():
+            sample = fo.Sample(filepath=str(img_path))
+            sample["group"] = group.element(cam_name)
+            sample["frame_idx"] = frame_idx
+            samples.append(sample)
 
-        # Add camera images
-        for cam_name in scene.camera.keys():
-            samples.append(fo.Sample(
-                filepath=scene.camera[cam_name].filepaths[frame_idx],
-                group=group.element(cam_name)
-            ))
+    # === Convert and add LiDAR point cloud ===
+    lidar_pkl = data_path / "lidar" / f"{frame_id}.pkl.gz"
+    if lidar_pkl.exists():
+        # Load pickle
+        with gzip.open(lidar_pkl, 'rb') as f:
+            lidar_data = pickle.load(f)
 
-        # Add lidar (save as PCD or use pickle path)
-        # ... handle lidar data ...
+        # Extract points (adjust based on actual data structure)
+        if isinstance(lidar_data, dict):
+            points = lidar_data.get('points', lidar_data.get('data'))
+        else:
+            points = np.array(lidar_data)
 
+        # Convert to PCD
+        pcd_path = pcd_output_dir / f"{frame_id}.pcd"
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points[:, :3])
+        o3d.io.write_point_cloud(str(pcd_path), pcd)
+
+        # Create 3D sample with scene
+        lidar_sample = fo.Sample(filepath=str(pcd_path))
+        lidar_sample["group"] = group.element("lidar")
+        lidar_sample["frame_idx"] = frame_idx
+
+        # === Load 3D cuboid labels if available ===
+        if "cuboids" in available_labels:
+            cuboids_pkl = labels_dir / "cuboids" / f"{frame_id}.pkl.gz"
+            if cuboids_pkl.exists():
+                with gzip.open(cuboids_pkl, 'rb') as f:
+                    cuboids_data = pickle.load(f)
+
+                detections = []
+                for cuboid in cuboids_data:
+                    # Adapt based on actual cuboid format
+                    detection = fo.Detection(
+                        label=cuboid.get("label", "object"),
+                        bounding_box=[0, 0, 0, 0],  # 2D placeholder
+                        # 3D attributes
+                        location=cuboid.get("position", [0, 0, 0]),
+                        dimensions=cuboid.get("dimensions", [1, 1, 1]),
+                        rotation=cuboid.get("rotation", [0, 0, 0]),
+                    )
+                    if "track_id" in cuboid:
+                        detection["track_id"] = cuboid["track_id"]
+                    detections.append(detection)
+
+                lidar_sample["detections_3d"] = fo.Detections(detections=detections)
+
+        # === Load semantic segmentation if available ===
+        if "semseg" in available_labels:
+            semseg_pkl = labels_dir / "semseg" / f"{frame_id}.pkl.gz"
+            if semseg_pkl.exists():
+                with gzip.open(semseg_pkl, 'rb') as f:
+                    semseg_data = pickle.load(f)
+                # Store as custom field (point-wise labels)
+                lidar_sample["point_labels"] = semseg_data.tolist() if hasattr(semseg_data, 'tolist') else semseg_data
+
+        samples.append(lidar_sample)
+
+# Add all samples
 dataset.add_samples(samples)
+dataset.save()
+
+print(f"Imported {len(dataset)} groups with {len(dataset.select_group_slices())} total samples")
+print(f"Slices: {dataset.group_slices}")
+print(f"Labels imported: {available_labels}")
 ```
 
 **Dynamic Import Discovery:**
@@ -499,9 +689,16 @@ If no example exists for the format:
 1. Search: "FiftyOne <format-name> import example"
 2. Search: "<format-name> devkit python example"
 3. Read the devkit documentation to understand data structure
-4. Build custom import code based on the devkit API
+4. Explore the annotation files to understand label format:
+   ```python
+   import pickle, gzip
+   with gzip.open("annotations/cuboids/00.pkl.gz", "rb") as f:
+       data = pickle.load(f)
+   print(type(data), data[0] if isinstance(data, list) else data)
+   ```
+5. Build custom import code based on the devkit API and label structure
 
-### Step 10: Import Labels (Optional)
+### Step 10: Import Additional Labels (Optional)
 
 If labels weren't imported with the specialized format, add them separately:
 
