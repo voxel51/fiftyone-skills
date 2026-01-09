@@ -1,0 +1,6 @@
+{
+  "name": "fiftyone-pr-triage",
+  "version": "1.0.0",
+  "description": "Triage FiftyOne GitHub issues by validating status, categorizing resolution, and generating standardized responses. Use when reviewing issues to determine if fixed, won't fix, not reproducible, or still valid.",
+  "skills": ["skills/fiftyone-pr-triage"]
+}

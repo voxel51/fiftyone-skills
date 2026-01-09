@@ -37,6 +37,11 @@
       "name": "fiftyone-code-style",
       "source": "./code-style",
       "description": "Write Python code following FiftyOne's official conventions. Use when contributing to FiftyOne, developing plugins, or writing code that integrates with FiftyOne's codebase. Covers module structure, import organization, Google-style docstrings, lazy imports, guard patterns, and error handling."
+    },
+    {
+      "name": "fiftyone-pr-triage",
+      "source": "./pr-triage",
+      "description": "Triage FiftyOne GitHub issues by validating status, categorizing resolution, and generating standardized responses. Use when reviewing issues to determine if already fixed, won't fix, not reproducible, no longer relevant, or still valid. Includes investigation workflow and response templates."
     }
   ]
 }

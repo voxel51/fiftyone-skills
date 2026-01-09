@@ -104,6 +104,26 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - Guard patterns with `hasattr()`
 - Error handling with `logger.warning()`
 
+### FiftyOne PR Triage (`pr-triage/`)
+
+**When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.
+
+**Instructions:** Load the skill file at `pr-triage/skills/fiftyone-pr-triage/SKILL.md`
+
+**Triage categories:**
+- Already Fixed - resolved in recent commits
+- Won't Fix - by design or out of scope
+- Not Reproducible - cannot reproduce with provided info
+- No Longer Relevant - outdated version or stale
+- Still Valid - confirmed bug or valid feature request
+
+**Workflow summary:**
+1. Read issue details and extract key info
+2. Search codebase for related code
+3. Check git history for fixes
+4. Search closed issues/PRs for duplicates
+5. Categorize and generate response
+
 ## Prerequisites
 
 All skills require:

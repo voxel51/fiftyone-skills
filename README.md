@@ -26,6 +26,7 @@ Skills are packaged workflows that teach AI assistants to perform complex comput
 | [**Embeddings Visualization**](embeddings-visualization/skills/fiftyone-embeddings-visualization/SKILL.md) | Visualize datasets in 2D, find clusters, identify outliers |
 | [**Develop Plugin**](develop-plugin/skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) from scratch |
 | [**Code Style**](code-style/skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions |
+| [**PR Triage**](pr-triage/skills/fiftyone-pr-triage/SKILL.md) | Triage GitHub issues: validate status, categorize, generate responses |
 
 ## Quick Start
 
