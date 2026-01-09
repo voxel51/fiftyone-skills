@@ -32,6 +32,11 @@
       "name": "fiftyone-develop-plugin",
       "source": "./develop-plugin",
       "description": "Develop custom FiftyOne plugins (operators and panels) from scratch. Use when users want to create, build, or develop a new plugin for FiftyOne App, extend FiftyOne with custom operators, create interactive panels, add new functionality to FiftyOne, or integrate external APIs/services into FiftyOne."
+    },
+    {
+      "name": "fiftyone-code-style",
+      "source": "./code-style",
+      "description": "Write Python code following FiftyOne's official conventions. Use when contributing to FiftyOne, developing plugins, or writing code that integrates with FiftyOne's codebase. Covers module structure, import organization, Google-style docstrings, lazy imports, guard patterns, and error handling."
     }
   ]
 }

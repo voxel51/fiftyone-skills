@@ -90,6 +90,20 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `PYTHON-PANEL.md` - Python panel development
 - `JAVASCRIPT-PANEL.md` - JavaScript/React panel development
 
+### FiftyOne Code Style (`code-style/`)
+
+**When to use:** User wants to write Python code following FiftyOne conventions, contribute to FiftyOne, or ensure code matches FiftyOne's style.
+
+**Instructions:** Load the skill file at `code-style/skills/fiftyone-code-style/SKILL.md`
+
+**Key patterns:**
+- Module structure (docstring → imports → logger → public → private)
+- Import organization (4 groups, FiftyOne aliases: fol, fou, etc.)
+- Google-style docstrings with Args/Returns/Raises
+- Lazy imports with `fou.lazy_import()`
+- Guard patterns with `hasattr()`
+- Error handling with `logger.warning()`
+
 ## Prerequisites
 
 All skills require:
