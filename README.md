@@ -24,6 +24,7 @@ Skills are packaged workflows that teach AI assistants to perform complex comput
 | [**Find Duplicates**](find-duplicates/skills/fiftyone-find-duplicates/SKILL.md) | Find and remove duplicate images using brain similarity |
 | [**Dataset Inference**](dataset-inference/skills/fiftyone-dataset-inference/SKILL.md) | Import datasets (COCO, YOLO, VOC) and run model inference |
 | [**Embeddings Visualization**](embeddings-visualization/skills/fiftyone-embeddings-visualization/SKILL.md) | Visualize datasets in 2D, find clusters, identify outliers |
+| [**Develop Plugin**](develop-plugin/skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) from scratch |
 
 ## Quick Start
 
