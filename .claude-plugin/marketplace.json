@@ -27,6 +27,11 @@
       "name": "fiftyone-embeddings-visualization",
       "source": "./embeddings-visualization",
       "description": "Visualize datasets in 2D using embeddings with UMAP or t-SNE dimensionality reduction. Use when users want to explore dataset structure, find clusters in images, identify outliers, color samples by class or metadata, or understand data distribution."
+    },
+    {
+      "name": "fiftyone-develop-plugin",
+      "source": "./develop-plugin",
+      "description": "Develop custom FiftyOne plugins (operators and panels) from scratch. Use when users want to create, build, or develop a new plugin for FiftyOne App, extend FiftyOne with custom operators, create interactive panels, add new functionality to FiftyOne, or integrate external APIs/services into FiftyOne."
     }
   ]
 }

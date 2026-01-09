@@ -1,0 +1,24 @@
+{
+  "name": "fiftyone-develop-plugin",
+  "version": "1.0.0",
+  "description": "Develop custom FiftyOne plugins (operators and panels) from scratch. Guides through requirements gathering, code generation, local testing, and iteration. Supports Python operators, JavaScript panels, delegated execution, and all FiftyOne plugin features.",
+  "author": {
+    "name": "Voxel51"
+  },
+  "repository": "https://github.com/voxel51/fiftyone-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "fiftyone",
+    "plugin",
+    "operator",
+    "panel",
+    "development",
+    "develop",
+    "create",
+    "generate",
+    "custom",
+    "python",
+    "javascript",
+    "react"
+  ]
+}

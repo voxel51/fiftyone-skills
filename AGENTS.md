@@ -64,6 +64,32 @@ This repository contains skills for computer vision workflows using FiftyOne and
 6. Color by field, find outliers, explore clusters
 7. Close app
 
+### FiftyOne Develop Plugin (`develop-plugin/`)
+
+**When to use:** User wants to create, build, or develop a new FiftyOne plugin (operator or panel), extend FiftyOne with custom functionality, or integrate external APIs/services.
+
+**Instructions:** Load the skill file at `develop-plugin/skills/fiftyone-develop-plugin/SKILL.md`
+
+**Key requirements:**
+- FiftyOne installed
+- Python 3.8+ for Python plugins
+- Node.js 16+ for JavaScript panels (optional)
+- FiftyOne MCP server for testing
+
+**Workflow summary:**
+1. Gather requirements (purpose, type, inputs/outputs)
+2. Search existing plugins for patterns
+3. Design and plan the plugin structure
+4. Generate code (fiftyone.yml, __init__.py, etc.)
+5. Install plugin locally for testing
+6. Iterate based on user feedback
+
+**Reference files:**
+- `PLUGIN-STRUCTURE.md` - Directory layout and fiftyone.yml
+- `PYTHON-OPERATOR.md` - Python operator development
+- `PYTHON-PANEL.md` - Python panel development
+- `JAVASCRIPT-PANEL.md` - JavaScript/React panel development
+
 ## Prerequisites
 
 All skills require:
