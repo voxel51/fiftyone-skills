@@ -107,7 +107,7 @@ def render(self, ctx):
 ### Data (Large Content)
 - Stored client-side only
 - Write-only from Python (can't read back)
-- Best for large data like plots, images, tables
+- Best for large data like plots
 
 ```python
 def on_load(self, ctx):
@@ -120,7 +120,8 @@ def on_load(self, ctx):
 
 def render(self, ctx):
     panel = types.Object()
-    panel.plot("my_plot", data_key="my_plot")  # Reference stored data
+    # Use view() with PlotlyView to display charts
+    panel.view("my_plot", types.PlotlyView(data_key="my_plot"))
     return types.Property(panel)
 ```
 
@@ -253,30 +254,36 @@ def render(self, ctx):
 
 ### Data Visualization
 
+**Note:** Python panels have limited visualization capabilities. For rich media display (images, videos, thumbnails), use JavaScript panels instead.
+
 ```python
 def render(self, ctx):
     panel = types.Object()
 
     # Plotly chart (requires data set via set_data)
-    panel.plot(
+    # Use panel.view() with PlotlyView for charts
+    panel.view(
         "chart",
-        data_key="chart_data"
+        types.PlotlyView(data_key="chart_data")
     )
 
-    # Table
-    panel.table(
-        "data_table",
-        data_key="table_data"
-    )
-
-    # Image
-    panel.image(
-        "sample_image",
-        src=ctx.panel.get_state("image_url", "")
-    )
+    # For displaying file paths or sample info, use markdown
+    filepath = ctx.panel.get_state("filepath", "")
+    if filepath:
+        import os
+        panel.str(
+            "file_info",
+            view=types.MarkdownView(),
+            default=f"**File:** `{os.path.basename(filepath)}`"
+        )
 
     return types.Property(panel)
 ```
+
+**Limitations:**
+- `panel.media()`, `panel.image()`, `panel.table()` do NOT exist
+- For image thumbnails or media preview, use JavaScript panels
+- For tables, format data as markdown or use PlotlyView with table trace
 
 ## Event Handlers
 
@@ -478,8 +485,8 @@ class StatisticsPanel(foo.Panel):
                 on_change=self.on_field_change
             )
 
-            # Plot
-            panel.plot("label_plot", data_key="label_plot")
+            # Plot (using view with PlotlyView)
+            panel.view("label_plot", types.PlotlyView(data_key="label_plot"))
 
         # Refresh button
         panel.btn(
