@@ -149,3 +149,15 @@ Thanks for reporting! Confirmed this issue.
 - [ ] Check if documented
 - [ ] Assess value of potential fix
 - [ ] Attempt reproduction (if bug)
+- [ ] Trace user's reproduction steps in source code
+- [ ] Verify workarounds work by checking actual code path
+- [ ] Keep user response simple (no internal code details)
+- [ ] End with 1-2 sentence internal summary
+
+## If User Willing to Contribute
+
+When user indicates willingness to contribute, after validating the issue provide:
+
+- **Contribution guide:** https://docs.voxel51.com/contribute/index.html
+- **Discord:** https://discord.com/invite/fiftyone-community (#github-contribution channel)
+- Point to relevant code files for the fix
