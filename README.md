@@ -84,6 +84,8 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 <details>
 <summary><b>Cursor</b></summary>
 
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](cursor://anysphere.cursor-deeplink/mcp/install?name=fiftyone&config=eyJjb21tYW5kIjoiZmlmdHlvbmUtbWNwIn0)
+
 Add to `~/.cursor/mcp.json`:
 
 ```json
@@ -100,6 +102,8 @@ Add to `~/.cursor/mcp.json`:
 
 <details>
 <summary><b>VSCode</b></summary>
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=fiftyone&config=%7B%22command%22%3A%22fiftyone-mcp%22%7D)
 
 Add to `.vscode/mcp.json`:
 
@@ -144,7 +148,7 @@ Use the FiftyOne find duplicates skill to remove redundant images from my quicks
 
 Claude will automatically load the skill instructions and execute the full workflow.
 
-## 📁 Skill Structure
+## Skill Structure
 
 Each skill follows the [Agent Skills](https://agentskills.io) specification:
 
