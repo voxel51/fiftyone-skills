@@ -1,0 +1,21 @@
+{
+  "name": "fiftyone-dataset-export",
+  "version": "1.0.0",
+  "description": "Export FiftyOne datasets to standard formats like COCO, YOLO, VOC, CVAT, and more. Supports exporting media, labels, or both to directories or archives.",
+  "author": {
+    "name": "Voxel51"
+  },
+  "repository": "https://github.com/voxel51/fiftyone-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "fiftyone",
+    "computer-vision",
+    "export",
+    "coco",
+    "yolo",
+    "voc",
+    "cvat",
+    "dataset",
+    "conversion"
+  ]
+}
