@@ -12,7 +12,7 @@
 **Expert workflows for computer vision powered by AI assistants**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![FiftyOne](https://img.shields.io/badge/FiftyOne-v1.2+-orange.svg)](https://github.com/voxel51/fiftyone)
+[![FiftyOne](https://img.shields.io/badge/FiftyOne-v1.10+-orange.svg)](https://github.com/voxel51/fiftyone)
 [![MCP Server](https://img.shields.io/badge/MCP%20Server-fiftyone--mcp-green.svg)](https://github.com/AdonaiVera/fiftyone-mcp-server)
 [![Discord](https://img.shields.io/badge/Discord-FiftyOne%20Community-7289DA.svg)](https://discord.gg/fiftyone-community)
 
