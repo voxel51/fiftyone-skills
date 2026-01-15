@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-inference
-description: Run model inference on FiftyOne datasets using Zoo models or custom models. Use when applying ML models for detection, classification, segmentation, or embeddings on existing datasets.
+description: Run ML model inference (YOLO, YOLOv8, CLIP, SAM, Detectron2, etc.) on FiftyOne datasets. Use when running models, applying detection, classification, segmentation, embeddings, or any model prediction task. Also use for end-to-end workflows that include importing data then running inference.
 ---
 
 # Run Model Inference on FiftyOne Datasets
