@@ -1,0 +1,11 @@
+{
+  "name": "fiftyone",
+  "description": "Build high-quality datasets and computer vision models. Visualize datasets, analyze models, find duplicates, run inference, evaluate predictions, and develop custom plugins.",
+  "version": "1.0.3",
+  "author": {
+    "name": "Voxel51"
+  },
+  "homepage": "https://docs.voxel51.com/",
+  "repository": "https://github.com/voxel51/fiftyone-skills",
+  "license": "Apache-2.0"
+}
