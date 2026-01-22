@@ -1,5 +1,20 @@
 # Python Operator Development
 
+## Contents
+- [Operator Anatomy](#operator-anatomy)
+- [OperatorConfig Options](#operatorconfig-options)
+- [Execution Context](#execution-context-ctx)
+- [Input Types Reference](#input-types-reference)
+- [Execution Patterns](#execution-patterns)
+- [Custom Runs (Auditable Operations)](#custom-runs-auditable-operations)
+- [Using Execution Store](#using-execution-store)
+- [Output Display](#output-display)
+- [Placement (UI Buttons)](#placement-ui-buttons)
+- [Debugging Operators](#debugging-operators)
+- [Complete Example](#complete-example-label-exporter)
+
+---
+
 ## Operator Anatomy
 
 ```python
@@ -98,8 +113,11 @@ def execute(self, ctx):
     # Get target view (respects user selection)
     target = ctx.target_view()
 
-    # Set progress (for generators)
+    # Set progress (for delegated execution with callback)
     ctx.set_progress(progress=0.5, label="Processing...")
+
+    # Set progress (for generator operators - use yield)
+    # yield ctx.trigger("set_progress", {"progress": 0.5, "label": "..."})
 ```
 
 ## Input Types Reference
@@ -293,10 +311,10 @@ def execute(self, ctx):
         process(sample)
         sample.save()
 
-        # Yield progress
-        yield ctx.set_progress(
-            progress=(i + 1) / total,
-            label=f"Processing {i + 1}/{total}"
+        # Yield progress to UI
+        yield ctx.trigger(
+            "set_progress",
+            {"progress": (i + 1) / total, "label": f"Processing {i + 1}/{total}"}
         )
 
     yield {"status": "complete", "processed": total}
@@ -350,6 +368,146 @@ def execute(self, ctx):
 
     return {"results": results}
 ```
+
+## Custom Runs (Auditable Operations)
+
+Use Custom Runs for operations that need auditability and reproducibility:
+
+```python
+from datetime import datetime
+
+class AuditableOperator(foo.Operator):
+    version = "v1"
+
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="auditable_operator",
+            label="Auditable Operator",
+            allow_delegated_execution=True,
+        )
+
+    def execute(self, ctx):
+        # Create unique run key (must be valid Python identifier)
+        timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        run_key = f"my_plugin_{self.config.name}_{self.version}_{timestamp}"
+
+        # Initialize run config (light metadata, <16MB)
+        run_config = ctx.dataset.init_run(
+            operator=self.config.name,
+            version=self.version,
+            params=dict(ctx.params),
+            dataset_name=ctx.dataset.name,
+        )
+
+        # Perform operation
+        result = self._process_samples(ctx)
+
+        # Initialize run results (can be large, stored in GridFS)
+        run_results = ctx.dataset.init_run_results(run_key)
+        run_results.summary = result.get("summary", {})
+        run_results.processed_count = result.get("count", 0)
+
+        # Register run with config and results
+        ctx.dataset.register_run(run_key, run_config, results=run_results)
+
+        return result
+
+    def _process_samples(self, ctx):
+        # Processing logic here
+        return {"summary": {...}, "count": len(ctx.target_view())}
+```
+
+### Managing Custom Runs
+
+```python
+# List all runs
+run_keys = dataset.list_runs()
+
+# Get run info (config)
+run_info = dataset.get_run_info(run_key)
+
+# Load run results
+results = dataset.load_run_results(run_key)
+
+# Update run config
+new_config = dataset.init_run(note="Updated config")
+dataset.update_run_config(run_key, new_config)
+
+# Rename or delete runs
+dataset.rename_run(run_key, f"{run_key}-archived")
+dataset.delete_run(run_key)
+```
+
+### Run Key Convention
+
+Run keys **must be valid Python identifiers** (letters, numbers, underscores only):
+
+```
+<namespace>_<operator>_<version>_<timestamp>
+
+# Examples:
+my_plugin_process_data_v1_20250122T120000Z
+my_plugin_export_labels_v2_20250122T120500Z
+```
+
+**Note:** Slashes are NOT allowed in run keys.
+
+## Using Execution Store
+
+Use `ctx.store()` for persistent data across sessions:
+
+```python
+class CachedOperator(foo.Operator):
+    version = "v1"
+
+    def _get_store_key(self, ctx):
+        """Generate unique store key."""
+        plugin_name = self.config.name.split("/")[-1]
+        return f"{plugin_name}_{ctx.dataset._doc.id}_{self.version}"
+
+    def execute(self, ctx):
+        store = ctx.store(self._get_store_key(ctx))
+
+        # Check cache
+        cache_key = f"result_{hash(str(ctx.params))}"
+        cached = store.get(cache_key)
+
+        if cached and self._is_valid(cached, ctx):
+            return cached["result"]
+
+        # Compute and cache
+        result = self._compute(ctx)
+
+        store.set(cache_key, {
+            "result": result,
+            "cached_at": time.time(),
+            "dataset_size": len(ctx.dataset),
+        })
+
+        return result
+
+    def _is_valid(self, cached, ctx):
+        """Check cache validity."""
+        cached_size = cached.get("dataset_size", 0)
+        return abs(len(ctx.dataset) - cached_size) < cached_size * 0.05
+```
+
+### Store API Quick Reference
+
+```python
+store = ctx.store("my_store")
+
+store.get(key)                    # Returns value or None
+store.set(key, value)             # Persist value
+store.set(key, value, ttl=3600)   # Expire in 1 hour
+store.has(key)                    # Returns bool
+store.delete(key)                 # Returns bool
+store.list_keys()                 # Returns list of keys
+store.clear()                     # Delete all keys
+```
+
+See [EXECUTION-STORE.md](EXECUTION-STORE.md) for advanced caching patterns.
 
 ## Output Display
 
@@ -438,6 +596,55 @@ def resolve_placement(self, ctx):
 | `HISTOGRAM_ACTIONS` | Histogram panel actions |
 | `MAP_ACTIONS` | Map panel actions |
 
+## Debugging Operators
+
+### Running Server for Logs
+
+To see Python logs from your plugin, run the server separately:
+
+```bash
+# Terminal 1: Start FiftyOne server (logs appear here)
+python -m fiftyone.server.main
+
+# Terminal 2: Open app in browser at localhost:5151
+```
+
+### Debug Patterns
+
+```python
+def execute(self, ctx):
+    # Quick debugging with print (shows in server terminal)
+    print(f"=== DEBUG: {self.config.name} ===")
+    print(f"Params: {ctx.params}")
+    print(f"Dataset: {ctx.dataset.name}")
+    print(f"View size: {len(ctx.view)}")
+    print(f"Selected: {ctx.selected}")
+
+    # Structured logging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    logger.debug(f"Processing view with {len(ctx.target_view())} samples")
+
+    # Inspect store contents
+    store = ctx.store("my_store")
+    print(f"Store keys: {store.list_keys()}")
+
+    # ... rest of execution
+```
+
+### Common Debug Scenarios
+
+| Issue | Debug Approach |
+|-------|----------------|
+| Operator not found | Check `fiftyone.yml`, run `list_operators()` |
+| Params missing | Print `ctx.params` at start of `execute()` |
+| Wrong view/samples | Print `len(ctx.view)`, `len(ctx.target_view())`, `ctx.selected` |
+| Store not persisting | Print `store.list_keys()` before and after |
+| Silent failure | Wrap in try/except, print exception |
+
+---
+
 ## Complete Example: Label Exporter
 
 ```python
@@ -517,9 +724,9 @@ class ExportLabels(foo.Operator):
 
             export_data.append(entry)
 
-            yield ctx.set_progress(
-                progress=(i + 1) / total,
-                label=f"Exporting {i + 1}/{total}"
+            yield ctx.trigger(
+                "set_progress",
+                {"progress": (i + 1) / total, "label": f"Exporting {i + 1}/{total}"}
             )
 
         # Write to file

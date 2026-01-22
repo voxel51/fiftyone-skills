@@ -1,5 +1,20 @@
 # JavaScript Panel Development
 
+## Contents
+- [Overview](#overview)
+- [When to Use JavaScript Panels](#when-to-use-javascript-panels)
+- [Project Setup](#project-setup)
+- [Component Registration](#component-registration)
+- [React Component Development](#react-component-development)
+- [Styling](#styling)
+- [TypeScript Operators](#typescript-operators)
+- [Building and Installing](#building-and-installing)
+- [Complete Example](#complete-example-sample-browser-panel)
+- [Debugging JavaScript Panels](#debugging-javascript-panels)
+- [Troubleshooting](#troubleshooting)
+
+---
+
 ## Overview
 
 JavaScript panels provide rich, interactive UIs using React and the FiftyOne JavaScript SDK. They offer more flexibility than Python panels but require additional setup.
@@ -300,9 +315,9 @@ const StyledPanel: React.FC = () => {
 };
 ```
 
-## JavaScript Operators
+## TypeScript Operators
 
-You can also define operators in JavaScript:
+You can define operators in TypeScript to interact with React state:
 
 ```typescript
 import { Operator, OperatorConfig, registerOperator } from "@fiftyone/operators";
@@ -331,8 +346,52 @@ class SelectRandomSamples extends Operator {
   }
 }
 
-registerOperator(SelectRandomSamples);
+registerOperator(SelectRandomSamples, "@myorg/my-plugin");
 ```
+
+### TypeScript Operators as Event Handlers
+
+TypeScript operators can receive triggers from Python operators. Use this pattern for real-time updates:
+
+```typescript
+import { Operator, OperatorConfig, registerOperator } from "@fiftyone/operators";
+import { useSetRecoilState } from "recoil";
+import { progressAtom } from "./state/progress";
+
+class ProgressUpdateOperator extends Operator {
+  get config(): OperatorConfig {
+    return new OperatorConfig({
+      name: "progress_update",
+      label: "Progress Update",
+      unlisted: true,  // Hide from operator browser - this is an event handler
+    });
+  }
+
+  useHooks() {
+    const setProgress = useSetRecoilState(progressAtom);
+    return { setProgress };
+  }
+
+  async execute({ hooks, params }) {
+    // Update React state when Python triggers this operator
+    hooks.setProgress((prev) => ({
+      ...prev,
+      value: params.progress ?? prev.value,
+      message: params.message ?? prev.message,
+    }));
+  }
+}
+
+// Register with your plugin namespace
+registerOperator(ProgressUpdateOperator, "@myorg/my-plugin");
+```
+
+Python triggers this operator:
+```python
+ctx.trigger("@myorg/my-plugin/progress_update", {"progress": 0.5, "message": "Processing..."})
+```
+
+See [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md) for complete Python + JavaScript communication patterns.
 
 ## Building and Installing
 
@@ -533,6 +592,69 @@ const SampleBrowser: React.FC = () => {
 
 export default SampleBrowser;
 ```
+
+## Debugging JavaScript Panels
+
+### Browser DevTools
+
+Open browser DevTools (F12) to debug JavaScript panels:
+
+| Tab | Use For |
+|-----|---------|
+| **Console** | JS errors, syntax errors, plugin load failures, `console.log()` output |
+| **Network** | API requests, payload data, response inspection |
+| **Sources** | Breakpoints, step-through debugging |
+| **React DevTools** | Component state, props inspection (install extension) |
+
+### Debug Patterns
+
+```typescript
+// Debug component lifecycle
+useEffect(() => {
+  console.log("Panel mounted, data:", panelData);
+  return () => console.log("Panel unmounted");
+}, []);
+
+// Debug state changes
+useEffect(() => {
+  console.log("State updated:", { samples, selectedField, isLoading });
+}, [samples, selectedField, isLoading]);
+
+// Debug API calls
+const handleClick = async () => {
+  console.log("Calling Python method with params:", params);
+  const result = await client.my_method(params);
+  console.log("Result received:", result);
+};
+
+// Debug Recoil state
+const myState = useRecoilValue(myAtom);
+console.log("Recoil state:", myState);
+```
+
+### Common Debug Scenarios
+
+| Issue | Debug Approach |
+|-------|----------------|
+| Panel not loading | Check Console for syntax/import errors |
+| Data not updating | Check Network tab for API response |
+| Click not working | Add `console.log` in handler, check for errors |
+| State not syncing | Log Recoil state, check Python trigger received |
+| Build not reflecting changes | Run `npm run build`, hard refresh browser |
+
+### Watch Mode Development
+
+```bash
+# Terminal 1: Watch TypeScript changes (auto-rebuilds)
+cd my-plugin && npm run dev
+
+# Terminal 2: Run FiftyOne server
+python -m fiftyone.server.main
+
+# After changes: Hard refresh browser (Ctrl+Shift+R)
+```
+
+---
 
 ## Troubleshooting
 

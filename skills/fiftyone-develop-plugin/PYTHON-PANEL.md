@@ -1,5 +1,17 @@
 # Python Panel Development
 
+## Contents
+- [Panel Anatomy](#panel-anatomy)
+- [PanelConfig Options](#panelconfig-options)
+- [State vs Data vs Store](#state-vs-data-vs-store)
+- [UI Components Reference](#ui-components-reference)
+- [Event Handlers](#event-handlers)
+- [Triggering Operators](#triggering-operators)
+- [Using Execution Store](#using-execution-store)
+- [Complete Example](#complete-example-sample-statistics-panel)
+
+---
+
 ## Panel Anatomy
 
 ```python
@@ -83,9 +95,15 @@ def register(p):
 | `"modal"` | Panel opens in modal dialog |
 | `"grid modal"` | Panel can appear in either location |
 
-## State vs Data
+## State vs Data vs Store
 
-Panels have two storage mechanisms:
+Panels have three storage mechanisms:
+
+| Storage | Lifetime | Readable | Best For |
+|---------|----------|----------|----------|
+| `ctx.panel.state` | Transient (resets on reload) | Yes | UI state, form values |
+| `ctx.panel.data` | Transient (resets on reload) | No | Large data (plots, tables) |
+| `ctx.store()` | Persistent (survives sessions) | Yes | User configs, cached results |
 
 ### State (Lightweight)
 - Included in every render cycle
@@ -328,7 +346,7 @@ def on_select_sample(self, ctx):
     """Handle sample selection"""
     sample_id = ctx.params.get("sample_id")
     if sample_id:
-        ctx.ops.set_selected([sample_id])
+        ctx.ops.set_selected_samples([sample_id])
 ```
 
 ## Triggering Operators
@@ -349,24 +367,50 @@ def on_run_operator(self, ctx):
 
 ## Using Execution Store
 
-Store data beyond panel lifetime:
+Store data beyond panel lifetime with namespaced keys:
 
 ```python
-def on_load(self, ctx):
-    store = ctx.store("my_panel_store")
+class MyPanel(foo.Panel):
+    version = "v1"
 
-    # Retrieve previous state
-    saved_config = store.get("config")
-    if saved_config:
-        ctx.panel.set_state("config", saved_config)
+    def _get_store_key(self, ctx):
+        """Generate unique store key to avoid cross-dataset conflicts."""
+        plugin_name = self.config.name.split("/")[-1]
+        return f"{plugin_name}_{ctx.dataset._doc.id}_{self.version}"
 
-def on_save_config(self, ctx):
-    store = ctx.store("my_panel_store")
-    config = ctx.panel.get_state("config", {})
+    def on_load(self, ctx):
+        store = ctx.store(self._get_store_key(ctx))
 
-    # Save with TTL (60 seconds)
-    store.set("config", config, ttl=60)
+        # Restore persistent config
+        saved_config = store.get("user_config")
+        if saved_config:
+            ctx.panel.state.config = saved_config
+        else:
+            ctx.panel.state.config = {"default": True}
+
+    def on_save_config(self, ctx):
+        store = ctx.store(self._get_store_key(ctx))
+        store.set("user_config", ctx.panel.state.config)
+
+    def on_change_dataset(self, ctx):
+        # Reinitialize when dataset changes (store key changes)
+        self.on_load(ctx)
 ```
+
+### Store API Quick Reference
+
+```python
+store = ctx.store("my_store")
+
+store.get(key)                    # Returns value or None
+store.set(key, value)             # Persist value
+store.set(key, value, ttl=3600)   # Expire in 1 hour
+store.has(key)                    # Returns bool
+store.delete(key)                 # Returns bool
+store.list_keys()                 # Returns list of keys
+```
+
+See [EXECUTION-STORE.md](EXECUTION-STORE.md) for advanced caching patterns.
 
 ## Complete Example: Sample Statistics Panel
 
