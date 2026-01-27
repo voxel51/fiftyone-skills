@@ -57,6 +57,12 @@
       "description": "Write Python code following FiftyOne's official conventions. Use when contributing to FiftyOne, developing plugins, or writing code that integrates with FiftyOne's codebase. Covers module structure, import organization, Google-style docstrings, lazy imports, guard patterns, and error handling."
     },
     {
+      "name": "fiftyone-voodo-design",
+      "source": "./skills/fiftyone-voodo-design",
+      "skills": "./",
+      "description": "Build FiftyOne UIs using VOODO (Voxel Official Design Ontology), the official React component library. Use when building plugin panels, creating interactive UIs, styling FiftyOne applications, or needing React components with proper design tokens. Fetches current component documentation dynamically from llms.txt."
+    },
+    {
       "name": "fiftyone-issue-triage",
       "source": "./skills/fiftyone-issue-triage",
       "skills": "./",

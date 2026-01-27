@@ -54,6 +54,7 @@ Skills for developers building with FiftyOne:
 | Skill | Command | Use When |
 |-------|---------|----------|
 | **Develop Plugin** | `/fiftyone:fiftyone-develop-plugin` | Creating custom operators or panels for FiftyOne App |
+| **VOODO Design** | `/fiftyone:fiftyone-voodo-design` | Building UIs with VOODO components, styling FiftyOne panels |
 | **Code Style** | `/fiftyone:fiftyone-code-style` | Writing Python code following FiftyOne conventions |
 | **Issue Triage** | `/fiftyone:fiftyone-issue-triage` | Triaging GitHub issues in the FiftyOne repository |
 

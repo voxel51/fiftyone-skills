@@ -73,7 +73,8 @@ panels:
     "@fiftyone/components": "*",
     "@fiftyone/operators": "*",
     "@fiftyone/plugins": "*",
-    "@fiftyone/state": "*"
+    "@fiftyone/state": "*",
+    "@voxel51/voodo": "latest"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
@@ -274,6 +275,35 @@ const OperatorTrigger: React.FC = () => {
 ```
 
 ## Styling
+
+### Using VOODO Components (Recommended)
+
+**VOODO** is FiftyOne's official React component library. Use it for consistent, theme-aware UI components.
+
+```bash
+npm install @voxel51/voodo
+```
+
+```typescript
+import { Button, Input, Select, Toast, Stack, Heading, Text } from "@voxel51/voodo";
+
+const MyPanel: React.FC = () => {
+  return (
+    <Stack spacing="md">
+      <Heading level={2}>Panel Title</Heading>
+      <Input placeholder="Enter value..." />
+      <Button variant="primary">Submit</Button>
+    </Stack>
+  );
+};
+```
+
+**For complete VOODO documentation**: Invoke the `fiftyone-voodo-design` skill, which:
+- Fetches current components from llms.txt
+- Lists design tokens (colors, spacing, typography)
+- Provides usage patterns and Storybook links
+
+**Quick reference**: https://voodo.dev.fiftyone.ai/
 
 ### Using Tailwind CSS
 

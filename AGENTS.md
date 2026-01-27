@@ -104,6 +104,26 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - Guard patterns with `hasattr()`
 - Error handling with `logger.warning()`
 
+### FiftyOne VOODO Design (`voodo-design/`)
+
+**When to use:** User wants to build FiftyOne UIs with React components, style JavaScript panels, use design tokens, or create consistent FiftyOne App interfaces.
+
+**Instructions:** Load the skill file at `voodo-design/skills/fiftyone-voodo-design/SKILL.md`
+
+**Key requirements:**
+- Node.js 16+ for JavaScript panels
+- `@voxel51/voodo` npm package
+
+**Workflow summary:**
+1. Fetch current VOODO docs via WebFetch from llms.txt
+2. Identify needed components from docs
+3. Use design tokens for colors, spacing, typography
+4. Build panel following FiftyOne patterns (dark theme, responsive)
+
+**Documentation sources:**
+- WebFetch: `https://voodo.dev.fiftyone.ai/llms.txt`
+- Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
+
 ### FiftyOne PR Triage (`pr-triage/`)
 
 **When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.

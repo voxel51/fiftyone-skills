@@ -44,7 +44,8 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 | 📈 [**Model Evaluation**](skills/fiftyone-model-evaluation/SKILL.md) | Compute mAP, precision, recall, confusion matrices, analyze TP/FP/FN |
 | 📊 [**Embeddings Visualization**](skills/fiftyone-embeddings-visualization/SKILL.md) | Visualize datasets in 2D, find clusters, identify outliers |
 | 🔌 [**Develop Plugin**](skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) |
-| 🎨 [**Code Style**](skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions |
+| 🎨 [**VOODO Design**](skills/fiftyone-voodo-design/SKILL.md) | Build UIs with VOODO React components and design tokens |
+| 📝 [**Code Style**](skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions |
 | 🏷️ [**Issue Triage**](skills/fiftyone-issue-triage/SKILL.md) | Triage GitHub issues: validate status, categorize, generate responses |
 
 ## Quick Start
