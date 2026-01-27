@@ -163,6 +163,8 @@ Reference docs:
 - [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md) - Python + JavaScript communication
 - [EXECUTION-STORE.md](EXECUTION-STORE.md) - Persistent storage and caching
 
+**For JavaScript panels with rich UI**: Invoke the `fiftyone-voodo-design` skill for VOODO components (buttons, inputs, toasts, design tokens). VOODO is FiftyOne's official React component library.
+
 ### Phase 4: Install & Test
 
 #### 4.1 Install Plugin
@@ -217,7 +219,7 @@ execute_operator(operator_uri="@myorg/my-operator", params={...})
 |------|----------|----------|
 | Operator | Python | Data processing, computations |
 | Panel | Python | Simple interactive UI |
-| Panel | JavaScript | Rich React-based UI |
+| Panel | JavaScript | Rich React-based UI (use VOODO components) |
 
 ### Operator Config Options
 
