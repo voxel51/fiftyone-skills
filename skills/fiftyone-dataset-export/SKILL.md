@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-export
-description: Exports FiftyOne datasets to standard formats (COCO, YOLO, VOC, CVAT, CSV, etc.). Use when converting datasets, exporting for training, creating archives, or sharing data in specific formats.
+description: Exports FiftyOne datasets to standard formats (COCO, YOLO, VOC, CVAT, CSV, etc.) and Hugging Face Hub. Use when converting datasets, exporting for training, creating archives, sharing data in specific formats, or publishing datasets to Hugging Face.
 ---
 
 # Export FiftyOne Datasets
@@ -424,6 +424,36 @@ view.export(
 - `fot.GeoJSONDataset` - GeoJSON format
 - `fot.FiftyOneDataset` - Native FiftyOne format
 
+## Exporting to Hugging Face Hub
+
+For complete HF Hub export documentation, see [HF-HUB-EXPORT.md](HF-HUB-EXPORT.md).
+
+**Quick reference:**
+
+| Method | Use Case |
+|--------|----------|
+| `push_to_hub()` | Personal accounts, simple upload |
+| Manual upload | Organizations, private org repos |
+
+**Quick start:**
+```python
+from fiftyone.utils.huggingface import push_to_hub
+
+# Personal account
+push_to_hub(dataset, repo_name="my-dataset", private=False)
+
+# With options
+push_to_hub(
+    dataset,
+    repo_name="my-dataset",
+    description="My dataset description",
+    license="apache-2.0",
+    private=True,
+)
+```
+
+**IMPORTANT:** Always generate and get user approval for dataset card before uploading. See [HF-HUB-EXPORT.md](HF-HUB-EXPORT.md) for complete documentation including authentication setup, dataset card workflow, parameters reference, use cases, and troubleshooting.
+
 ## Troubleshooting
 
 **Error: "Export directory already exists"**
@@ -463,3 +493,5 @@ view.export(
 - [FiftyOne Export Guide](https://docs.voxel51.com/user_guide/export_datasets.html)
 - [Supported Export Formats](https://docs.voxel51.com/user_guide/export_datasets.html#supported-formats)
 - [FiftyOne I/O Plugin](https://github.com/voxel51/fiftyone-plugins/tree/main/plugins/io)
+- [FiftyOne Hugging Face Integration](https://docs.voxel51.com/integrations/huggingface.html)
+- [Hugging Face Hub Documentation](https://huggingface.co/docs/hub/index)

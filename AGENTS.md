@@ -4,11 +4,80 @@ This repository contains skills for computer vision workflows using FiftyOne and
 
 ## Available Skills
 
-### FiftyOne Find Duplicates (`find-duplicates/`)
+### FiftyOne Dataset Import (`fiftyone-dataset-import/`)
+
+**When to use:** User wants to import datasets from local files, Hugging Face Hub, or any supported format (COCO, YOLO, VOC, KITTI, etc.), including multimodal grouped datasets.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-import/SKILL.md`
+
+**Key requirements:**
+- FiftyOne MCP server must be running
+- `@voxel51/io` plugin for importing data
+- `@voxel51/utils` plugin for dataset management
+- `huggingface_hub` package for HF Hub imports
+
+**Workflow summary:**
+1. Scan directory or HF Hub to detect media and labels
+2. Auto-detect format (COCO, YOLO, VOC, parquet, FiftyOne, etc.)
+3. Confirm findings with user
+4. Create dataset and import samples
+5. For HF Hub: use `load_from_hub()` or `snapshot_download()`
+6. Validate import count
+7. Launch App to view
+
+**Supported sources:**
+- Local directories with media files
+- COCO, YOLO, VOC, KITTI, CVAT annotations
+- Hugging Face Hub (FiftyOne-formatted, parquet, or raw formats)
+- Multimodal grouped datasets (autonomous driving)
+
+### FiftyOne Dataset Export (`fiftyone-dataset-export/`)
+
+**When to use:** User wants to export datasets to standard formats, share on Hugging Face Hub, convert between formats, or create training data archives.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-export/SKILL.md`
+
+**Key requirements:**
+- FiftyOne MCP server must be running
+- `@voxel51/io` plugin for exporting data
+- `huggingface_hub` package for HF Hub exports
+
+**Workflow summary:**
+1. Load dataset and review with `dataset_summary()`
+2. Confirm export format and destination
+3. For local: use `export_samples` operator
+4. For HF Hub: use `push_to_hub()` function
+5. Verify exported file counts
+
+**Supported destinations:**
+- Local directories (COCO, YOLO, VOC, CVAT, CSV, etc.)
+- Hugging Face Hub (public or private repos)
+- FiftyOne Dataset format (full backup with brain runs)
+
+### FiftyOne Model Evaluation (`fiftyone-model-evaluation/`)
+
+**When to use:** User wants to evaluate model predictions against ground truth, compute mAP, precision, recall, confusion matrices, or analyze TP/FP/FN examples.
+
+**Instructions:** Load the skill file at `skills/fiftyone-model-evaluation/SKILL.md`
+
+**Key requirements:**
+- FiftyOne MCP server must be running
+- `@voxel51/evaluation` plugin must be installed
+- Dataset with both predictions and ground truth fields
+
+**Workflow summary:**
+1. Set context with dataset name
+2. Identify prediction and ground truth fields
+3. Choose evaluation protocol (COCO, Open Images, etc.)
+4. Execute evaluation operator
+5. Review metrics and confusion matrix
+6. Explore TP/FP/FN examples in App
+
+### FiftyOne Find Duplicates (`fiftyone-find-duplicates/`)
 
 **When to use:** User wants to find duplicate images, remove redundant samples, find similar images, or deduplicate a dataset.
 
-**Instructions:** Load the skill file at `find-duplicates/skills/fiftyone-find-duplicates/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-find-duplicates/SKILL.md`
 
 **Key requirements:**
 - FiftyOne MCP server must be running
@@ -23,11 +92,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 5. Review and delete duplicates
 6. Close app
 
-### FiftyOne Dataset Inference (`dataset-inference/`)
+### FiftyOne Dataset Inference (`fiftyone-dataset-inference/`)
 
 **When to use:** User wants to load images/videos from a directory, import labeled datasets (COCO, YOLO, VOC), or run model inference on media files.
 
-**Instructions:** Load the skill file at `dataset-inference/skills/fiftyone-dataset-inference/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-inference/SKILL.md`
 
 **Key requirements:**
 - FiftyOne MCP server must be running
@@ -44,11 +113,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 6. Launch App and run inference
 7. View results and close app
 
-### FiftyOne Embeddings Visualization (`embeddings-visualization/`)
+### FiftyOne Embeddings Visualization (`fiftyone-embeddings-visualization/`)
 
 **When to use:** User wants to visualize dataset in 2D, find clusters, identify outliers, color by class, explore embedding space, or understand data distribution.
 
-**Instructions:** Load the skill file at `embeddings-visualization/skills/fiftyone-embeddings-visualization/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-embeddings-visualization/SKILL.md`
 
 **Key requirements:**
 - FiftyOne MCP server must be running
@@ -64,11 +133,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 6. Color by field, find outliers, explore clusters
 7. Close app
 
-### FiftyOne Develop Plugin (`develop-plugin/`)
+### FiftyOne Develop Plugin (`fiftyone-develop-plugin/`)
 
 **When to use:** User wants to create, build, or develop a new FiftyOne plugin (operator or panel), extend FiftyOne with custom functionality, or integrate external APIs/services.
 
-**Instructions:** Load the skill file at `develop-plugin/skills/fiftyone-develop-plugin/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-develop-plugin/SKILL.md`
 
 **Key requirements:**
 - FiftyOne installed
@@ -90,11 +159,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `PYTHON-PANEL.md` - Python panel development
 - `JAVASCRIPT-PANEL.md` - JavaScript/React panel development
 
-### FiftyOne Code Style (`code-style/`)
+### FiftyOne Code Style (`fiftyone-code-style/`)
 
 **When to use:** User wants to write Python code following FiftyOne conventions, contribute to FiftyOne, or ensure code matches FiftyOne's style.
 
-**Instructions:** Load the skill file at `code-style/skills/fiftyone-code-style/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-code-style/SKILL.md`
 
 **Key patterns:**
 - Module structure (docstring → imports → logger → public → private)
@@ -104,11 +173,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - Guard patterns with `hasattr()`
 - Error handling with `logger.warning()`
 
-### FiftyOne VOODO Design (`voodo-design/`)
+### FiftyOne VOODO Design (`fiftyone-voodo-design/`)
 
 **When to use:** User wants to build FiftyOne UIs with React components, style JavaScript panels, use design tokens, or create consistent FiftyOne App interfaces.
 
-**Instructions:** Load the skill file at `voodo-design/skills/fiftyone-voodo-design/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-voodo-design/SKILL.md`
 
 **Key requirements:**
 - Node.js 16+ for JavaScript panels
@@ -124,11 +193,11 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - WebFetch: `https://voodo.dev.fiftyone.ai/llms.txt`
 - Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
 
-### FiftyOne PR Triage (`pr-triage/`)
+### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
 
 **When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.
 
-**Instructions:** Load the skill file at `pr-triage/skills/fiftyone-pr-triage/SKILL.md`
+**Instructions:** Load the skill file at `skills/fiftyone-issue-triage/SKILL.md`
 
 **Triage categories:**
 - Already Fixed - resolved in recent commits
