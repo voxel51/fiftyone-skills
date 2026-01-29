@@ -12,13 +12,13 @@
       "name": "fiftyone-dataset-import",
       "source": "./skills/fiftyone-dataset-import",
       "skills": "./",
-      "description": "Universal dataset import for FiftyOne supporting all media types (images, videos, point clouds, 3D scenes), all label formats (COCO, YOLO, VOC, CVAT, KITTI, etc.), and multimodal grouped datasets. Use when users want to import any dataset regardless of format, handle autonomous driving data with multiple cameras and LiDAR, or create grouped datasets from multimodal data."
+      "description": "Universal dataset import for FiftyOne supporting all media types (images, videos, point clouds, 3D scenes), all label formats (COCO, YOLO, VOC, CVAT, KITTI, etc.), multimodal grouped datasets, and Hugging Face Hub datasets. Use when users want to import any dataset regardless of format or source, load datasets from Hugging Face, handle autonomous driving data with multiple cameras and LiDAR, or create grouped datasets from multimodal data."
     },
     {
       "name": "fiftyone-dataset-export",
       "source": "./skills/fiftyone-dataset-export",
       "skills": "./",
-      "description": "Export FiftyOne datasets to standard formats (COCO, YOLO, VOC, CVAT, CSV, etc.). Use when converting datasets, exporting for training, creating archives, or sharing data in specific formats."
+      "description": "Export FiftyOne datasets to standard formats (COCO, YOLO, VOC, CVAT, CSV, etc.) and Hugging Face Hub. Use when converting datasets, exporting for training, creating archives, sharing data in specific formats, or publishing datasets to Hugging Face Hub."
     },
     {
       "name": "fiftyone-find-duplicates",

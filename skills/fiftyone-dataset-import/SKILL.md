@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-import
-description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds), label formats (COCO, YOLO, VOC, KITTI), and multimodal grouped datasets. Use when importing datasets, loading autonomous driving data, or creating grouped datasets.
+description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, or creating grouped datasets.
 ---
 
 # Universal Dataset Import for FiftyOne
@@ -55,6 +55,14 @@ Many specialized dataset formats require external Python packages. After detecti
 | Point cloud conversion to PCD | `open3d` | `pip install open3d` |
 | Point cloud processing | `pyntcloud` | `pip install pyntcloud` |
 | LAS/LAZ point clouds | `laspy` | `pip install laspy` |
+
+**Additional packages for Hugging Face Hub:**
+
+| Purpose | Package Name | Install Command |
+|---------|--------------|-----------------|
+| HF Hub API | `huggingface_hub` | `pip install huggingface_hub` |
+| Parquet file reading | `pyarrow` | `pip install pyarrow` |
+| Image processing | `Pillow` | `pip install Pillow` |
 
 **Installation methods (in order of preference):**
 
@@ -991,6 +999,36 @@ After launching the app:
 3. Samples are synchronized - selecting a sample shows all its group members
 4. Use the grid view to see multiple slices side by side
 
+## Importing from Hugging Face Hub
+
+For complete HF Hub import documentation, see [HF-HUB-IMPORT.md](HF-HUB-IMPORT.md).
+
+**Quick reference:**
+
+| Dataset Type | Method |
+|--------------|--------|
+| FiftyOne-formatted (`fiftyone.yml`) | `load_from_hub("repo_id")` |
+| Parquet-based | `load_from_hub("repo_id", format="ParquetFilesDataset", filepath="image")` |
+| COCO/YOLO/VOC on HF | `snapshot_download()` → local import |
+| Rate limited (>10K) | Parquet extraction fallback (see HF-HUB-IMPORT.md) |
+
+**Quick start:**
+```python
+from fiftyone.utils.huggingface import load_from_hub
+
+# FiftyOne-formatted dataset
+dataset = load_from_hub("Voxel51/VisDrone2019-DET", persistent=True)
+
+# Generic parquet dataset
+dataset = load_from_hub(
+    "username/dataset",
+    format="ParquetFilesDataset",
+    filepath="image",
+    classification_fields="label",
+    persistent=True,
+)
+```
+
 ## Troubleshooting
 
 **Error: "Dataset already exists"**
@@ -1059,4 +1097,6 @@ After launching the app:
 - [Point Cloud Support](https://docs.voxel51.com/user_guide/3d.html)
 - [Supported Dataset Formats](https://docs.voxel51.com/user_guide/dataset_creation/datasets.html)
 - [FiftyOne I/O Plugin](https://github.com/voxel51/fiftyone-plugins/tree/main/plugins/io)
+- [FiftyOne Hugging Face Integration](https://docs.voxel51.com/integrations/huggingface.html)
+- [Hugging Face Hub Documentation](https://huggingface.co/docs/hub/index)
 

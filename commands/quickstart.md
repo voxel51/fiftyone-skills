@@ -41,6 +41,11 @@ You can either:
   Use /fiftyone:fiftyone-dataset-import to import my dataset from /path/to/data
   ```
 
+- **Import from Hugging Face Hub**:
+  ```
+  Use /fiftyone:fiftyone-dataset-import to import the dataset from huggingface.co/datasets/username/dataset-name
+  ```
+
 **Step 2: Run Model Inference**
 
 Apply a model to your dataset:
