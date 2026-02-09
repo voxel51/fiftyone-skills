@@ -35,22 +35,57 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 
 ## Available Skills
 
-| Skill | Description |
-|-------|-------------|
-| 📥 [**Dataset Import**](skills/fiftyone-dataset-import/SKILL.md) | Universal import for all media types, label formats, multimodal groups, and Hugging Face Hub |
-| 📤 [**Dataset Export**](skills/fiftyone-dataset-export/SKILL.md) | Export datasets to COCO, YOLO, VOC, CVAT, CSV, Hugging Face Hub, and more |
-| 🔍 [**Find Duplicates**](skills/fiftyone-find-duplicates/SKILL.md) | Find and remove duplicate images using brain similarity |
-| 🤖 [**Dataset Inference**](skills/fiftyone-dataset-inference/SKILL.md) | Run Zoo models for detection, classification, segmentation, embeddings |
-| 📈 [**Model Evaluation**](skills/fiftyone-model-evaluation/SKILL.md) | Compute mAP, precision, recall, confusion matrices, analyze TP/FP/FN |
-| 📊 [**Embeddings Visualization**](skills/fiftyone-embeddings-visualization/SKILL.md) | Visualize datasets in 2D, find clusters, identify outliers |
-| 🔌 [**Develop Plugin**](skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) |
-| 🎨 [**VOODO Design**](skills/fiftyone-voodo-design/SKILL.md) | Build UIs with VOODO React components and design tokens |
-| 📝 [**Code Style**](skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions |
-| 🏷️ [**Issue Triage**](skills/fiftyone-issue-triage/SKILL.md) | Triage GitHub issues: validate status, categorize, generate responses |
+| Skill | Description | MCP |
+|-------|-------------|-----|
+| 📥 [**Dataset Import**](skills/fiftyone-dataset-import/SKILL.md) | Universal import for all media types, label formats, multimodal groups, and Hugging Face Hub | Yes |
+| 📤 [**Dataset Export**](skills/fiftyone-dataset-export/SKILL.md) | Export datasets to COCO, YOLO, VOC, CVAT, CSV, Hugging Face Hub, and more | Yes |
+| 🔍 [**Find Duplicates**](skills/fiftyone-find-duplicates/SKILL.md) | Find and remove duplicate images using brain similarity | Yes |
+| 🤖 [**Dataset Inference**](skills/fiftyone-dataset-inference/SKILL.md) | Run Zoo models for detection, classification, segmentation, embeddings | Yes |
+| 📈 [**Model Evaluation**](skills/fiftyone-model-evaluation/SKILL.md) | Compute mAP, precision, recall, confusion matrices, analyze TP/FP/FN | Yes |
+| 📊 [**Embeddings Visualization**](skills/fiftyone-embeddings-visualization/SKILL.md) | Visualize datasets in 2D, find clusters, identify outliers | Yes |
+| 🔌 [**Develop Plugin**](skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) | — |
+| 🎨 [**VOODO Design**](skills/fiftyone-voodo-design/SKILL.md) | Build UIs with VOODO React components and design tokens | — |
+| 📝 [**Code Style**](skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions | — |
+| 🏷️ [**Issue Triage**](skills/fiftyone-issue-triage/SKILL.md) | Triage GitHub issues: validate status, categorize, generate responses | — |
 
 ## Quick Start
 
-### Step 1: Install the MCP Server
+### Step 1: Install Skills
+
+**Universal Installer** (Recommended):
+```bash
+curl -sL skil.sh | sh -s -- voxel51/fiftyone-skills
+```
+Interactive prompts let you select skills, agents, and install scope (project or global).
+
+Supported agents: Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, Amp, Antigravity, Roo Code, Kilo Code, Goose
+
+**Claude Code:**
+```bash
+# Register the skills marketplace
+/plugin marketplace add voxel51/fiftyone-skills
+
+# Install a skill
+/plugin install fiftyone-find-duplicates@fiftyone-skills
+```
+
+**Gemini CLI:**
+```bash
+gemini extensions install https://github.com/voxel51/fiftyone-skills.git --consent
+```
+
+### Step 2: Use It
+
+```
+"Write a FiftyOne plugin that displays model confidence"
+"Write Python code following FiftyOne conventions"
+```
+
+Your AI assistant will automatically load the skill instructions and execute the workflow.
+
+### Step 3: Set Up MCP Server (Optional)
+
+Skills marked with **MCP** in the [table above](#available-skills) require the [FiftyOne MCP Server](https://github.com/voxel51/fiftyone-mcp-server) to interact with datasets and run operators.
 
 ```bash
 pip install fiftyone-mcp-server
@@ -58,7 +93,7 @@ pip install fiftyone-mcp-server
 
 > **⚠️ Important:** Make sure to use the same Python environment where you installed the MCP server when configuring your AI tool. If you installed it in a virtual environment or conda environment, you must activate that environment or specify the full path to the executable.
 
-### Step 2: Configure Your AI Tool
+Then configure your AI tool:
 
 <details>
 <summary><b>Claude Code</b> (Recommended)</summary>
@@ -124,42 +159,12 @@ Add to `.vscode/mcp.json`:
 
 </details>
 
-### Step 3: Install Skills
-
-**Universal Installer** (Recommended):
-```bash
-curl -sL skil.sh | sh -s -- voxel51/fiftyone-skills
-```
-Interactive prompts let you select skills, agents, and install scope (project or global).
-
-Supported agents: Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, Amp, Antigravity, Roo Code, Kilo Code, Goose
-
-**Claude Code:**
-```bash
-# Register the skills marketplace
-/plugin marketplace add voxel51/fiftyone-skills
-
-# Install a skill
-/plugin install fiftyone-find-duplicates@fiftyone-skills
-```
-
-**Codex:**
-```bash
-codex --ask-for-approval never "Summarize the current instructions."
-```
-
-**Gemini CLI:**
-```bash
-gemini extensions install https://github.com/voxel51/fiftyone-skills.git --consent
-```
-
-### Step 4: Use It
+Once configured, you can use MCP-dependent skills:
 
 ```
-Use the FiftyOne find duplicates skill to remove redundant images from my quickstart dataset
+"Find and remove duplicate images from my dataset"
+"Import this COCO dataset and run object detection"
 ```
-
-Claude will automatically load the skill instructions and execute the full workflow.
 
 ## Skill Structure
 
@@ -207,6 +212,17 @@ We welcome contributions! Here's how to create a new skill:
 6. **Submit** a Pull Request
 
 See [find-duplicates SKILL.md](skills/fiftyone-find-duplicates/SKILL.md) for a complete example.
+
+## Feedback
+
+Help us improve FiftyOne Skills!
+
+**Just ask your AI assistant:**
+```
+"Help me submit feedback about [your issue]"
+```
+
+The agent will automatically gather session context, environment info, and can submit directly via `gh` CLI or generate content to paste at **[Submit Feedback](https://github.com/voxel51/fiftyone-skills/issues/new?template=skill-feedback.yml)**
 
 ## Resources
 
