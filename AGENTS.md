@@ -265,6 +265,115 @@ Most FiftyOne skills follow this pattern:
 **"Context not set" error:**
 - Solution: Call `set_context(dataset_name="...")` first
 
+## Session Tracking & Feedback
+
+### WORK_LOG.md
+
+Track session context to help debug issues and provide feedback:
+
+**At START of session:**
+- If `WORK_LOG.md` exists: Read it FIRST for project context
+- If not: Ask if user wants to create one for tracking
+
+**UPDATE when:**
+- Problems solved
+- Files created/modified
+- Important decisions made
+- Commands executed
+- At END of substantial interactions
+
+**Template:**
+```markdown
+# Project Work Log
+
+## Session: YYYY-MM-DD HH:MM
+
+### Context
+- What we're working on
+
+### Work Completed
+- Changes, solutions, files modified
+
+### Commands Executed
+```bash
+# Commands with results
+```
+
+### Decisions Made
+- Choices and rationale
+
+### Next Steps
+- What remains, blockers
+
+### References
+- Relevant docs, links
+
+---
+```
+
+**Guidelines:**
+- Keep concise - summarize, don't dump conversations
+- Reverse chronological (newest first)
+- Serves as memory across sessions and context for feedback
+
+### Submitting Feedback
+
+When users want to report issues or provide feedback, **YOU (the agent) must automatically gather and summarize the actual session**:
+
+1. **Summarize the conversation:**
+   - What the user was trying to accomplish
+   - What steps were taken
+   - What went wrong or what feedback they have
+
+2. **Report what was ACTUALLY USED (not all available):**
+   - Your agent type (Claude Code, Cursor, Codex, etc.)
+   - Skills that were invoked/used in THIS session
+   - MCP tools that were called in THIS session
+   - Read WORK_LOG.md if it exists
+
+3. **Run environment commands:**
+   ```bash
+   python -c "import fiftyone; print(fiftyone.__version__)"
+   pip show fiftyone-mcp-server | grep Version
+   python --version
+   ```
+
+4. **Generate issue content** with gathered info:
+   ```markdown
+   ## Feedback
+
+   **Type:** [Bug/Feature/Question]
+   **Skill:** [skill that was used]
+
+   ### Session Context
+   - **Agent:** [your agent type]
+   - **Skills Used:** [only skills invoked in this session]
+   - **MCP Tools Used:** [only MCP tools called in this session]
+
+   ### Conversation Summary
+   [Summarize what the user was doing and what happened]
+
+   ### Session Log
+   [WORK_LOG.md excerpts if available]
+
+   ### Environment
+   - FiftyOne: [version]
+   - MCP Server: [version]
+   - Python: [version]
+   ```
+
+5. **Offer to submit directly** or provide content to paste:
+   ```bash
+   # Submit directly via gh CLI
+   gh issue create --repo voxel51/fiftyone-skills \
+     --title "[Feedback]: Brief description" \
+     --body "$(cat <<'EOF'
+   [generated content here]
+   EOF
+   )"
+   ```
+   Or provide content to paste at: https://github.com/voxel51/fiftyone-skills/issues/new
+
 ## Resources
 
 - [FiftyOne Documentation](https://docs.voxel51.com)

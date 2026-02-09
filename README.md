@@ -213,6 +213,17 @@ We welcome contributions! Here's how to create a new skill:
 
 See [find-duplicates SKILL.md](skills/fiftyone-find-duplicates/SKILL.md) for a complete example.
 
+## Feedback
+
+Help us improve FiftyOne Skills!
+
+**Just ask your AI assistant:**
+```
+"Help me submit feedback about [your issue]"
+```
+
+The agent will automatically gather session context, environment info, and can submit directly via `gh` CLI or generate content to paste at **[Submit Feedback](https://github.com/voxel51/fiftyone-skills/issues/new?template=skill-feedback.yml)**
+
 ## Resources
 
 | Resource | Description |
