@@ -16,6 +16,14 @@ Ask clarifying questions. Never assume what the plugin should do.
 Present file structure and design. Get user approval before generating code.
 
 ### 3. Search existing plugins for patterns
+```bash
+# Clone official plugins for reference
+git clone https://github.com/voxel51/fiftyone-plugins.git /tmp/fiftyone-plugins 2>/dev/null || true
+
+# Search for similar patterns
+grep -r "keyword" /tmp/fiftyone-plugins/plugins/ --include="*.py" -l
+```
+
 ```python
 list_plugins(enabled=True)
 list_operators(builtin_only=False)
@@ -23,23 +31,48 @@ get_operator_schema(operator_uri="@voxel51/brain/compute_similarity")
 ```
 
 ### 4. Test locally before done
-Install plugin and verify it works in FiftyOne App.
+
+```bash
+# Get plugins directory
+PLUGINS_DIR=$(python -c "import fiftyone as fo; print(fo.config.plugins_dir)")
+
+# Develop plugin in plugins directory
+cd $PLUGINS_DIR/my-plugin
+```
+
+Write tests:
+- **Python**: `pytest` for operators/panels
+- **JavaScript**: `vitest` for React components
+
+Verify in FiftyOne App before done.
 
 ### 5. Iterate on feedback
+
+Run server separately to see logs:
+```bash
+# Terminal 1: Python logs
+python -m fiftyone.server.main
+
+# Terminal 2: Browser at localhost:5151 (JS logs in DevTools console)
+```
+
+For automated iteration, use Playwright e2e tests:
+```bash
+npx playwright test
+```
+
 Refine until the plugin works as expected.
 
 ## Critical Patterns
 
 ### Operator Execution
 ```python
-# Use foo.execute_operator() for programmatic execution
-import fiftyone.operators as foo
-result = foo.execute_operator(operator_uri, ctx, **params)
-
-# Use ctx.trigger() to chain operators from within an operator
+# Chain operators (non-delegated operators only, in execute() only, fire-and-forget)
 ctx.trigger("@plugin/other_operator", params={...})
 
-# ctx.ops provides UI operations: notify(), set_progress(), show_panel_output()
+# UI operations
+ctx.ops.notify("Done!")
+ctx.ops.set_progress(0.5)
 ```
 
 ### View Selection
@@ -74,7 +107,7 @@ def on_load(self, ctx):
 ```
 
 ### Delegated Execution
-Use for operations that: process >100 samples, take >1 second, or call external APIs.
+Use for operations that: process >100 samples or take >1 second.
 
 ```python
 @property
@@ -123,19 +156,20 @@ See [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md) for Python + JavaScript communication
 
 ### Phase 1: Requirements
 
-Ask these questions:
+Understand what the user needs to accomplish:
 
-1. "What should your plugin do?" (one sentence)
-2. "Operator (action) or Panel (interactive UI)?"
-3. "What inputs from the user?"
-4. "What outputs/results?"
-5. "External APIs or secrets needed?"
-6. "Background execution for long tasks?"
+1. "What problem are you trying to solve?"
+2. "What should the user be able to do?" (user's perspective)
+3. "What information does the user provide?"
+4. "What result does the user expect to see?"
+5. "Any external data sources or services involved?"
+6. "How will this fit into the user's workflow?"
 
 ### Phase 2: Design
 
 1. Search existing plugins for similar patterns
-2. Create plan with:
+2. For panels, default to **hybrid** (Python + JavaScript). See [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md).
+3. Create plan with:
    - Plugin name (`@org/plugin-name`)
    - File structure
    - Operator/panel specs
@@ -165,18 +199,9 @@ Reference docs:
 
 **For JavaScript panels with rich UI**: Invoke the `fiftyone-voodo-design` skill for VOODO components (buttons, inputs, toasts, design tokens). VOODO is FiftyOne's official React component library.
 
-### Phase 4: Install & Test
+### Phase 4: Validate & Test
 
-#### 4.1 Install Plugin
-```bash
-# Find plugins directory
-python -c "import fiftyone as fo; print(fo.config.plugins_dir)"
-
-# Copy plugin
-cp -r ./my-plugin ~/.fiftyone/plugins/
-```
-
-#### 4.2 Validate Detection
+#### 4.1 Validate Detection
 ```python
 list_plugins(enabled=True)  # Should show your plugin
 list_operators()  # Should show your operators
@@ -184,14 +209,14 @@ list_operators()  # Should show your operators
 
 **If not found:** Check fiftyone.yml syntax, Python syntax errors, restart App.
 
-#### 4.3 Validate Schema
+#### 4.2 Validate Schema
 ```python
 get_operator_schema(operator_uri="@myorg/my-operator")
 ```
 
 Verify inputs/outputs match your expectations.
 
-#### 4.4 Test Execution
+#### 4.3 Test Execution
 ```python
 set_context(dataset_name="test-dataset")
 launch_app()
@@ -206,10 +231,9 @@ execute_operator(operator_uri="@myorg/my-operator", params={...})
 ### Phase 5: Iterate
 
 1. Get user feedback
-2. Fix issues
-3. Re-copy to plugins directory
-4. Restart App if needed
-5. Repeat until working
+2. Fix issues (sync source and plugins directory if separate)
+3. Restart App if needed
+4. Repeat until working
 
 ## Quick Reference
 
@@ -218,8 +242,8 @@ execute_operator(operator_uri="@myorg/my-operator", params={...})
 | Type | Language | Use Case |
 |------|----------|----------|
 | Operator | Python | Data processing, computations |
-| Panel | Python | Simple interactive UI |
-| Panel | JavaScript | Rich React-based UI (use VOODO components) |
+| Panel | Hybrid (default) | Python backend + React frontend (recommended) |
+| Panel | Python-only | Simple UI without rich interactivity |
 
 ### Operator Config Options
 
@@ -363,6 +387,15 @@ console.log("Panel data:", panelData);
 **Secrets not available:**
 - Add to `fiftyone.yml` under `secrets:`
 - Set environment variables before starting FiftyOne
+
+## Advanced
+
+### Programmatic Operator Execution
+```python
+# For executing operators outside of FiftyOne App context
+import fiftyone.operators as foo
+result = foo.execute_operator(operator_uri, ctx, **params)
+```
 
 ## Resources
 
