@@ -31,15 +31,6 @@ Documentation = "https://docs.voxel51.com"
 [project.scripts]
 fiftyone-skills = "fiftyone_skills:main"
 
-[tool.uv]
-package = true
-
-[tool.setuptools]
-packages = ["fiftyone_skills"]
-
-[tool.setuptools.package-data]
-fiftyone_skills = ["skills/**/*"]
-
 [build-system]
 requires = ["uv_build>=0.10.2,<0.11.0"]
 build-backend = "uv_build"

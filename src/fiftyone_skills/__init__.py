@@ -95,6 +95,7 @@ def download_skills_from_github(dest_dir: Path, repo: str = "voxel51/fiftyone-sk
     import json
     import tempfile
     import zipfile
+    import os
     
     print(f"Downloading skills from {repo}@{branch}...")
     
@@ -113,8 +114,17 @@ def download_skills_from_github(dest_dir: Path, repo: str = "voxel51/fiftyone-sk
             print("Please check your internet connection and that the repository is accessible.", file=sys.stderr)
             sys.exit(1)
         
-        # Extract zip file
+        # Extract zip file with path validation
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # Validate all paths before extraction to prevent path traversal attacks
+            for member in zip_ref.namelist():
+                # Normalize the path and ensure it doesn't escape the temp directory
+                member_path = (tmpdir_path / member).resolve()
+                if not str(member_path).startswith(str(tmpdir_path.resolve())):
+                    print(f"Error: Malicious path detected in zip file: {member}", file=sys.stderr)
+                    sys.exit(1)
+            
+            # Safe to extract after validation
             zip_ref.extractall(tmpdir_path)
         
         # Find the extracted directory (it will be named repo-branch)
@@ -215,9 +225,15 @@ Examples:
     
     # Parse key=value arguments
     config = {}
+    valid_keys = {"env", "agent"}
+    
     for item in args.config:
         if "=" in item:
             key, value = item.split("=", 1)
+            if key not in valid_keys:
+                print(f"Error: Unknown argument '{key}'", file=sys.stderr)
+                print(f"Valid arguments are: {', '.join(valid_keys)}", file=sys.stderr)
+                sys.exit(1)
             config[key] = value
         else:
             print(f"Error: Invalid argument format: {item}", file=sys.stderr)
