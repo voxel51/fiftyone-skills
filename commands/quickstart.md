@@ -75,6 +75,7 @@ Once you're comfortable, try:
 - `/fiftyone:fiftyone-find-duplicates` - Clean your dataset
 - `/fiftyone:fiftyone-model-evaluation` - Evaluate prediction quality
 - `/fiftyone:fiftyone-embeddings-visualization` - Explore data distribution
+- `/fiftyone:fiftyone-create-notebook` - Generate a full ML pipeline notebook
 
 ---
 
