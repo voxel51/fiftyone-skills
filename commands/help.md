@@ -46,6 +46,7 @@ Skills for working with datasets and models:
 | **Dataset Inference** | `/fiftyone:fiftyone-dataset-inference` | Running detection, classification, segmentation, or embeddings on data |
 | **Model Evaluation** | `/fiftyone:fiftyone-model-evaluation` | Computing mAP, precision, recall, confusion matrices |
 | **Embeddings Visualization** | `/fiftyone:fiftyone-embeddings-visualization` | Exploring dataset structure, finding clusters, identifying outliers |
+| **Create Notebook** | `/fiftyone:fiftyone-create-notebook` | Creating Jupyter notebooks for tutorials, getting-started guides, recipes, or ML pipelines |
 
 ### FiftyOne Develop
 

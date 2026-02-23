@@ -46,6 +46,7 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 | 🔌 [**Develop Plugin**](skills/fiftyone-develop-plugin/SKILL.md) | Create custom FiftyOne plugins (operators and panels) | — |
 | 🎨 [**VOODO Design**](skills/fiftyone-voodo-design/SKILL.md) | Build UIs with VOODO React components and design tokens | — |
 | 📝 [**Code Style**](skills/fiftyone-code-style/SKILL.md) | Write Python code following FiftyOne's official conventions | — |
+| 📓 [**Create Notebook**](skills/fiftyone-create-notebook/SKILL.md) | Create Jupyter notebooks: getting-started guides, tutorials, recipes, ML pipelines | — |
 | 🏷️ [**Issue Triage**](skills/fiftyone-issue-triage/SKILL.md) | Triage GitHub issues: validate status, categorize, generate responses | — |
 
 ## Quick Start

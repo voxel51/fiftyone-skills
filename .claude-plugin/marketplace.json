@@ -67,6 +67,12 @@
       "source": "./skills/fiftyone-issue-triage",
       "skills": "./",
       "description": "Triage FiftyOne GitHub issues by validating status, categorizing resolution, and generating standardized responses. Use when reviewing issues to determine if already fixed, won't fix, not reproducible, no longer relevant, or still valid. Includes investigation workflow and response templates."
+    },
+    {
+      "name": "fiftyone-create-notebook",
+      "source": "./skills/fiftyone-create-notebook",
+      "skills": "./",
+      "description": "Creates Jupyter notebooks for FiftyOne workflows including getting-started guides, tutorials, recipes, and full ML pipelines. Use when users want to create a notebook, write a tutorial, build a demo, document a workflow, or generate a FiftyOne walkthrough covering data loading, exploration, inference, evaluation, and export. Builds notebooks cell-by-cell using NotebookEdit."
     }
   ]
 }

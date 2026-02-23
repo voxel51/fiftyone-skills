@@ -193,6 +193,32 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - WebFetch: `https://voodo.dev.fiftyone.ai/llms.txt`
 - Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
 
+### FiftyOne Create Notebook (`fiftyone-create-notebook/`)
+
+**When to use:** User wants to create a Jupyter notebook for a FiftyOne workflow, write a tutorial, build a getting-started guide, create a recipe, generate a demo, or document a complete ML pipeline.
+
+**Instructions:** Load the skill file at `skills/fiftyone-create-notebook/SKILL.md`
+
+**Key requirements:**
+- FiftyOne installed
+- NotebookEdit tool available (built-in to Claude Code)
+- No MCP server required (generates Python SDK code, not MCP operations)
+
+**Workflow summary:**
+1. Determine notebook type (getting-started, tutorial, recipe, full pipeline)
+2. Gather requirements (domain, data source, pipeline stages)
+3. Fetch current FiftyOne API from `https://docs.voxel51.com/llms.txt`
+4. Draft and present notebook outline for user approval
+5. Create empty `.ipynb` file with Write tool
+6. Build cells sequentially with NotebookEdit insert mode
+7. Verify notebook structure by reading it back
+
+**Reference files:**
+- `NOTEBOOK-STRUCTURE.md` - Cell structure patterns and code references
+- `GETTING-STARTED-TEMPLATES.md` - Beginner end-to-end templates
+- `TUTORIAL-TEMPLATES.md` - Intermediate deep-dive templates
+- `RECIPE-TEMPLATES.md` - Quick practical recipe templates
+
 ### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
 
 **When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.
