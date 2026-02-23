@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-inference
-description: Run ML model inference (YOLO, YOLOv8, CLIP, SAM, Detectron2, etc.) on FiftyOne datasets. Use when running models, applying detection, classification, segmentation, embeddings, or any model prediction task. Also use for end-to-end workflows that include importing data then running inference.
+description: Run ML model inference on FiftyOne datasets. Use when running models for detection, classification, segmentation, or embeddings. Discovers available models dynamically from the Zoo, plugin operators, or custom sources — never assumes a fixed model list.
 ---
 
 # Run Model Inference on FiftyOne Datasets
@@ -67,21 +67,58 @@ Review:
 launch_app(dataset_name="my-dataset")
 ```
 
-### Step 4: Apply Model Inference
+### Step 4: Discover and Apply Model
 
-Ask user for:
-- Model name (see **Available Zoo Models** below)
-- Label field for predictions
+Ask the user what they want to do (detection, classification, segmentation, embeddings, or a specific model name). Then determine the path:
 
+**Path A — Zoo model (most common)**
+
+Fetch the live model list — never assume what's available:
+```python
+get_operator_schema(operator_uri="@voxel51/zoo/apply_zoo_model")
+```
+Pick the right model from the schema's model enum, then apply:
 ```python
 execute_operator(
     operator_uri="@voxel51/zoo/apply_zoo_model",
     params={
         "tab": "BUILTIN",
-        "model": "yolov8n-coco-torch",
+        "model": "<model-name-from-schema>",
         "label_field": "predictions"
     }
 )
+```
+
+**Path B — Plugin operator**
+
+If the user mentions a specific tool (e.g. CLIP similarity, SAM, a third-party model), check installed operators first:
+```python
+list_operators(builtin_only=False)
+```
+Find the matching operator, inspect its schema, then execute it:
+```python
+get_operator_schema(operator_uri="@org/plugin/operator")
+execute_operator(operator_uri="@org/plugin/operator", params={...})
+```
+
+**Path C — Remote / externally registered model**
+
+If the model comes from a registered remote source (GitHub repo registered via `foz.register_zoo_model_source()`):
+```python
+execute_operator(
+    operator_uri="@voxel51/zoo/apply_zoo_model",
+    params={
+        "tab": "REMOTE",
+        "source": "<github-repo-url>",
+        "label_field": "predictions"
+    }
+)
+```
+
+Check registered remote sources first:
+```python
+import fiftyone.zoo as foz
+foz.list_zoo_model_sources()
 ```
 
 ### Step 5: View Results
@@ -96,47 +133,22 @@ set_view(exists=["predictions"])
 close_app()
 ```
 
-## Available Zoo Models
+## Model Discovery
 
-Some models require additional packages. If a model fails with a dependency error, the response includes `install_command`. Offer to run it for the user.
+**Always fetch the live model list — never rely on a hardcoded list.**
 
-### Detection Models
+```python
+get_operator_schema(operator_uri="@voxel51/zoo/apply_zoo_model")
+```
 
-| Model | Description | Extra Deps |
-|-------|-------------|------------|
-| `faster-rcnn-resnet50-fpn-coco-torch` | Faster R-CNN | None |
-| `retinanet-resnet50-fpn-coco-torch` | RetinaNet | None |
-| `yolov8n-coco-torch` | YOLOv8 nano (fast) | ultralytics |
-| `yolov8s-coco-torch` | YOLOv8 small | ultralytics |
-| `yolov8m-coco-torch` | YOLOv8 medium | ultralytics |
-| `yolov8l-coco-torch` | YOLOv8 large | ultralytics |
-| `yolov8x-coco-torch` | YOLOv8 extra-large | ultralytics |
+The schema returns the full set of available models at runtime. Use the model names from there directly.
 
-### Classification Models
+For plugin-provided models or operators:
+```python
+list_operators(builtin_only=False)
+```
 
-| Model | Description | Extra Deps |
-|-------|-------------|------------|
-| `resnet50-imagenet-torch` | ResNet-50 | None |
-| `mobilenet-v2-imagenet-torch` | MobileNet v2 | None |
-| `vit-base-patch16-224-imagenet-torch` | Vision Transformer | None |
-
-### Segmentation Models
-
-| Model | Description | Extra Deps |
-|-------|-------------|------------|
-| `sam-vit-base-torch` | Segment Anything (base) | segment-anything |
-| `sam-vit-large-torch` | Segment Anything (large) | segment-anything |
-| `sam-vit-huge-torch` | Segment Anything (huge) | segment-anything |
-| `deeplabv3-resnet101-coco-torch` | DeepLabV3 | None |
-
-### Embedding Models
-
-| Model | Description | Extra Deps |
-|-------|-------------|------------|
-| `clip-vit-base32-torch` | CLIP embeddings | open-clip-torch |
-| `dinov2-vits14-torch` | DINOv2 small | None |
-| `dinov2-vitb14-torch` | DINOv2 base | None |
-| `dinov2-vitl14-torch` | DINOv2 large | None |
+> If a model fails with a dependency error, the response includes `install_command`. Offer to run it for the user.
 
 ## Common Use Cases
 
@@ -266,8 +278,7 @@ execute_operator(
 - Use the **fiftyone-dataset-import** skill to import data first
 
 **Error: "Model not found"**
-- Check model name spelling
-- Use `get_operator_schema("@voxel51/zoo/apply_zoo_model")` to see available models
+- Run `get_operator_schema(operator_uri="@voxel51/zoo/apply_zoo_model")` to get the current live model list and pick the correct name
 
 **Error: "Missing dependency" (e.g., ultralytics, segment-anything)**
 - The MCP server detects missing dependencies
