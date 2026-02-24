@@ -1,7 +1,0 @@
-include README.md
-include LICENSE
-include AGENTS.md
-recursive-include skills *.md
-recursive-include skills *.json
-recursive-include skills *.yml
-recursive-include skills *.yaml
