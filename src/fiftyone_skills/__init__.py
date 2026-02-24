@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import shutil
 import sys
 import sysconfig
@@ -14,14 +15,34 @@ from pathlib import Path
 
 __version__ = "0.1.0"
 
+logger = logging.getLogger(__name__)
 
-# Agent-specific directory mappings
 AGENT_DIRS = {
     "claude": ".claude/skills",
     "codex": ".codex/skills",
     "cursor": ".cursor/skills",
     "copilot": ".github/copilot/skills",
 }
+
+
+def _setup_logging() -> None:
+    """Configure logging for CLI output: INFO to stdout, WARNING+ to stderr."""
+    fmt = logging.Formatter("%(message)s")
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setFormatter(fmt)
+    stdout_handler.addFilter(lambda rec: rec.levelno < logging.WARNING)
+
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.WARNING)
+    stderr_handler.setFormatter(fmt)
+
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    root.handlers.clear()
+    root.addHandler(stdout_handler)
+    root.addHandler(stderr_handler)
 
 
 def get_package_skills_dir() -> Path:
@@ -49,46 +70,38 @@ def get_package_skills_dir() -> Path:
 def get_install_dir(env: str, agent: str | None = None) -> Path:
     """Determine the installation directory based on env and agent."""
     if env == "local":
-        # Project-local installation
         base_dir = Path.cwd()
     elif env == "global":
-        # User-global installation
         base_dir = Path.home()
     else:
         raise ValueError(f"Invalid env value: {env}. Must be 'local' or 'global'")
 
-    if agent:
-        agent_key = agent.lower()
-        if agent_key != "none":
-            if agent_key not in AGENT_DIRS:
-                raise ValueError(
-                    f"Invalid agent: {agent}. "
-                    f"Must be one of: {', '.join(AGENT_DIRS.keys())}, None"
-                )
-            return base_dir / AGENT_DIRS[agent_key]
+    if agent and (agent_key := agent.lower()) != "none":
+        if agent_key not in AGENT_DIRS:
+            raise ValueError(
+                f"Invalid agent: {agent}. "
+                f"Must be one of: {', '.join(AGENT_DIRS.keys())}, None"
+            )
+        return base_dir / AGENT_DIRS[agent_key]
 
     return base_dir / ".agents" / "skills"
 
 
 def copy_skills(src_dir: Path, dest_dir: Path) -> int:
     """Copy skills from source to destination directory."""
-    # Create destination directory if it doesn't exist
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy each skill directory
     skill_count = 0
     for skill_path in src_dir.iterdir():
         if skill_path.is_dir() and not skill_path.name.startswith("."):
             dest_path = dest_dir / skill_path.name
 
-            # Remove existing if present
             if dest_path.exists():
                 shutil.rmtree(dest_path)
 
-            # Copy the skill directory
             shutil.copytree(skill_path, dest_path)
             skill_count += 1
-            print(f"  ✓ {skill_path.name}")
+            logger.info("  ✓ %s", skill_path.name)
 
     return skill_count
 
@@ -146,15 +159,14 @@ def download_skills_from_github(
     """Download/update skills from GitHub using the Contents API."""
     api_base = f"https://api.github.com/repos/{repo}/contents"
 
-    print(f"Fetching skills from {repo}@{branch}...")
+    logger.info("Fetching skills from %s@%s...", repo, branch)
 
     try:
         entries = _fetch_json(f"{api_base}/skills?ref={branch}")
     except Exception as e:
-        print(f"Error fetching skills list from GitHub: {e}", file=sys.stderr)
-        print(
-            "Please check your internet connection and that the repository is accessible.",
-            file=sys.stderr,
+        logger.error("Error fetching skills list from GitHub: %s", e)
+        logger.error(
+            "Please check your internet connection and that the repository is accessible."
         )
         sys.exit(1)
 
@@ -162,9 +174,7 @@ def download_skills_from_github(
         e for e in entries if e["type"] == "dir" and not e["name"].startswith(".")
     ]
 
-    dest_dir.mkdir(parents=True, exist_ok=True)
-
-    print("\nUpdating skills:")
+    logger.info("\nUpdating skills:")
     total_dl = total_skip = 0
     for skill in skill_dirs:
         try:
@@ -174,54 +184,54 @@ def download_skills_from_github(
             total_dl += dl
             total_skip += skip
             status = f"{dl} file(s) updated" if dl else "up to date"
-            print(f"  ✓ {skill['name']} ({status})")
+            logger.info("  ✓ %s (%s)", skill["name"], status)
         except Exception as e:
-            print(f"  ✗ {skill['name']}: {e}", file=sys.stderr)
+            logger.warning("  ✗ %s: %s", skill["name"], e)
 
-    print(
-        f"\n✓ {len(skill_dirs)} skills processed: "
-        f"{total_dl} file(s) updated, {total_skip} unchanged"
+    logger.info(
+        "\n✓ %d skills processed: %d file(s) updated, %d unchanged",
+        len(skill_dirs),
+        total_dl,
+        total_skip,
     )
 
 
 def install_skills(env: str, agent: str | None = None, update: bool = False) -> None:
     """Install FiftyOne skills to the specified location."""
-    # Determine installation directory
     install_dir = get_install_dir(env, agent)
 
     if update:
-        # Download latest from GitHub
         download_skills_from_github(install_dir)
     else:
-        # Install from package
         try:
             skills_dir = get_package_skills_dir()
         except FileNotFoundError as e:
-            print(f"Error: {e}", file=sys.stderr)
+            logger.error("Error: %s", e)
             sys.exit(1)
 
-        print(f"\nInstalling skills from package to {install_dir}...")
-        print("Installing skills:")
+        logger.info("\nInstalling skills to %s:", install_dir)
         skill_count = copy_skills(skills_dir, install_dir)
-        print(f"\n✓ Successfully installed {skill_count} skills to {install_dir}")
+        logger.info(
+            "\n✓ Successfully installed %d skills to %s", skill_count, install_dir
+        )
 
-    # Print usage information
-    print("\n" + "=" * 60)
-    print("Installation complete!")
-    print("=" * 60)
+    sep = "=" * 60
+    logger.info("\n%s\nInstallation complete!\n%s", sep, sep)
 
     if agent and agent.lower() != "none":
-        print(f"\nSkills installed for {agent.upper()} agent at:")
+        logger.info("\nSkills installed for %s agent at:", agent.upper())
     else:
-        print("\nSkills installed at:")
-    print(f"  {install_dir}")
+        logger.info("\nSkills installed at:")
+    logger.info("  %s", install_dir)
 
-    print("\nTo use these skills, configure your AI assistant to load them.")
-    print("Refer to the README.md for agent-specific setup instructions.")
+    logger.info("\nTo use these skills, configure your AI assistant to load them.")
+    logger.info("Refer to the README.md for agent-specific setup instructions.")
 
 
 def main() -> None:
     """Main entry point for the CLI."""
+    _setup_logging()
+
     parser = argparse.ArgumentParser(
         description="Install FiftyOne Skills for AI assistants",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -267,21 +277,18 @@ Examples:
         if "=" in item:
             key, value = item.split("=", 1)
             if key not in valid_keys:
-                print(f"Error: Unknown argument '{key}'", file=sys.stderr)
-                print(f"Valid arguments are: {', '.join(valid_keys)}", file=sys.stderr)
+                logger.error("Error: Unknown argument '%s'", key)
+                logger.error("Valid arguments are: %s", ", ".join(valid_keys))
                 sys.exit(1)
             config[key] = value
         else:
-            print(f"Error: Invalid argument format: {item}", file=sys.stderr)
-            print("Arguments must be in format key=value", file=sys.stderr)
+            logger.error("Error: Invalid argument format: %s", item)
+            logger.error("Arguments must be in format key=value")
             sys.exit(1)
 
     # Validate required arguments
     if "env" not in config:
-        print(
-            "Error: 'env' argument is required (env=local or env=global)",
-            file=sys.stderr,
-        )
+        logger.error("Error: 'env' argument is required (env=local or env=global)")
         parser.print_help()
         sys.exit(1)
 
@@ -291,5 +298,5 @@ Examples:
     try:
         install_skills(env, agent, update=args.update)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        logger.error("Error: %s", e)
         sys.exit(1)
