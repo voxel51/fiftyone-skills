@@ -1,11 +1,15 @@
 """FiftyOne Skills installer CLI."""
 
+from __future__ import annotations
+
 import argparse
+import hashlib
+import json
 import shutil
 import sys
 import sysconfig
+import urllib.request
 from pathlib import Path
-from typing import Optional
 
 
 __version__ = "0.1.0"
@@ -40,7 +44,7 @@ def get_package_skills_dir() -> Path:
     )
 
 
-def get_install_dir(env: str, agent: Optional[str] = None) -> Path:
+def get_install_dir(env: str, agent: str | None = None) -> Path:
     """Determine the installation directory based on env and agent."""
     if env == "local":
         # Project-local installation
@@ -88,88 +92,94 @@ def copy_skills(src_dir: Path, dest_dir: Path) -> int:
     return skill_count
 
 
+def _git_blob_sha(path: Path) -> str:
+    """Compute the git blob SHA1 for a local file."""
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode()
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def _fetch_json(url: str) -> list[dict]:
+    """Fetch JSON from a URL using urllib."""
+    req = urllib.request.Request(url, headers={"User-Agent": "fiftyone-skills-cli"})
+    with urllib.request.urlopen(req) as resp:
+        return json.loads(resp.read().decode())
+
+
+def _sync_directory(
+    api_base: str, remote_path: str, local_dir: Path, branch: str
+) -> tuple[int, int]:
+    """Recursively sync a remote GitHub directory to a local directory.
+
+    Returns (files_downloaded, files_skipped).
+    """
+    entries = _fetch_json(f"{api_base}/{remote_path}?ref={branch}")
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    downloaded = skipped = 0
+    for entry in entries:
+        if entry["type"] == "file":
+            dest = local_dir / entry["name"]
+            if dest.exists() and _git_blob_sha(dest) == entry["sha"]:
+                skipped += 1
+                continue
+            urllib.request.urlretrieve(entry["download_url"], dest)
+            downloaded += 1
+        elif entry["type"] == "dir":
+            d, s = _sync_directory(
+                api_base, entry["path"], local_dir / entry["name"], branch
+            )
+            downloaded += d
+            skipped += s
+
+    return downloaded, skipped
+
+
 def download_skills_from_github(
     dest_dir: Path, repo: str = "voxel51/fiftyone-skills", branch: str = "main"
 ) -> None:
-    """Download skills from GitHub repository."""
-    import urllib.request
-    import tempfile
-    import zipfile
+    """Download/update skills from GitHub using the Contents API."""
+    api_base = f"https://api.github.com/repos/{repo}/contents"
 
-    print(f"Downloading skills from {repo}@{branch}...")
+    print(f"Fetching skills from {repo}@{branch}...")
 
-    # Download the repository as a zip file
-    zip_url = f"https://github.com/{repo}/archive/refs/heads/{branch}.zip"
+    try:
+        entries = _fetch_json(f"{api_base}/skills?ref={branch}")
+    except Exception as e:
+        print(f"Error fetching skills list from GitHub: {e}", file=sys.stderr)
+        print(
+            "Please check your internet connection and that the repository is accessible.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-        zip_path = tmpdir_path / "repo.zip"
+    skill_dirs = [
+        e for e in entries if e["type"] == "dir" and not e["name"].startswith(".")
+    ]
 
-        # Download zip file
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    print("\nUpdating skills:")
+    total_dl = total_skip = 0
+    for skill in skill_dirs:
         try:
-            urllib.request.urlretrieve(zip_url, zip_path)
+            dl, skip = _sync_directory(
+                api_base, skill["path"], dest_dir / skill["name"], branch
+            )
+            total_dl += dl
+            total_skip += skip
+            status = f"{dl} file(s) updated" if dl else "up to date"
+            print(f"  ✓ {skill['name']} ({status})")
         except Exception as e:
-            print(f"Error downloading from GitHub: {e}", file=sys.stderr)
-            print(
-                "Please check your internet connection and that the repository is accessible.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+            print(f"  ✗ {skill['name']}: {e}", file=sys.stderr)
 
-        # Extract zip file with path validation
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            # Validate all paths before extraction to prevent path traversal attacks
-            import os
-
-            tmpdir_resolved = tmpdir_path.resolve()
-
-            for member in zip_ref.namelist():
-                # Normalize the path and ensure it doesn't escape the temp directory
-                member_path = (tmpdir_path / member).resolve()
-
-                # Use os.path.commonpath for robust validation across platforms
-                try:
-                    common = Path(os.path.commonpath([tmpdir_resolved, member_path]))
-                    if common != tmpdir_resolved:
-                        print(
-                            f"Error: Malicious path detected in zip file: {member}",
-                            file=sys.stderr,
-                        )
-                        sys.exit(1)
-                except ValueError:
-                    # On Windows, paths on different drives raise ValueError
-                    print(
-                        f"Error: Malicious path detected in zip file: {member}",
-                        file=sys.stderr,
-                    )
-                    sys.exit(1)
-
-            # Safe to extract after validation
-            zip_ref.extractall(tmpdir_path)
-
-        # Find the extracted directory (it will be named repo-branch)
-        repo_name = repo.split("/")[-1]
-        extracted_dir = tmpdir_path / f"{repo_name}-{branch}"
-
-        if not extracted_dir.exists():
-            print(
-                f"Error: Could not find extracted directory at {extracted_dir}",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-        # Copy skills from extracted directory
-        skills_src = extracted_dir / "skills"
-        if not skills_src.exists():
-            print(f"Error: No skills directory found in {repo}", file=sys.stderr)
-            sys.exit(1)
-
-        print("\nInstalling skills:")
-        skill_count = copy_skills(skills_src, dest_dir)
-        print(f"\n✓ Successfully installed {skill_count} skills to {dest_dir}")
+    print(
+        f"\n✓ {len(skill_dirs)} skills processed: "
+        f"{total_dl} file(s) updated, {total_skip} unchanged"
+    )
 
 
-def install_skills(env: str, agent: Optional[str] = None, update: bool = False) -> None:
+def install_skills(env: str, agent: str | None = None, update: bool = False) -> None:
     """Install FiftyOne skills to the specified location."""
     # Determine installation directory
     install_dir = get_install_dir(env, agent)
