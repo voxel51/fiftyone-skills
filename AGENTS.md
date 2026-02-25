@@ -225,12 +225,12 @@ This repository contains skills for computer vision workflows using FiftyOne and
 
 **Instructions:** Load the skill file at `skills/fiftyone-troubleshoot/SKILL.md`
 
-**CRITICAL safety rules enforced by this skill:**
+**CRITICAL safety rules enforced by this skill (except when user gives explicit direction):**
 - NEVER delete a dataset without explicit user confirmation
 - NEVER directly manipulate MongoDB (no pymongo, no `db.drop_collection`, no raw shell commands)
 - NEVER modify FiftyOne config files silently
 
-**Issue categories covered:**
+**Issue Index - categories covered:**
 - Dataset persistence (`persistent = True`)
 - App connection (`session.wait()`, Windows guard, port conflicts)
 - Unsaved changes (`sample.save()`, `dataset.save()`, `set_values()`)
@@ -248,6 +248,7 @@ This repository contains skills for computer vision workflows using FiftyOne and
 3. Explain the cause and proposed fix before applying
 4. Apply fix and verify resolution
 5. Add new issues to the skill as they are encountered
+6. Verify environment status by running a diagnostic check
 
 ### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
 

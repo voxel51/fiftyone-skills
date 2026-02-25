@@ -7,7 +7,7 @@ description: Diagnose and fix common FiftyOne issues automatically. Use when a d
 
 ## Overview
 
-Diagnose and fix common FiftyOne pain points. Match the user's symptom to the Issue Index, explain the root cause and proposed fix, get approval, then apply.
+Diagnose and fix common FiftyOne pain points. Match the user's symptom to the [Issue Index](#issue-index), explain the root cause and proposed fix, get approval, then apply.
 
 > Shell commands in this skill are written for macOS/Linux. On Windows (non-WSL), adapt using PowerShell equivalents or use WSL.
 
@@ -26,12 +26,13 @@ Designed to grow: add new issues at the bottom as they are encountered.
 2. Describing what the fix will do
 3. Asking the user to confirm: *"Should I apply this fix?"*
 
-Wait for a yes before executing anything that modifies files, config, or data.
+Wait for explicit user confirmation before executing anything that modifies files, config, or data.
 
 ### 2. Never touch user datasets — FiftyOne is the source of truth
-- NEVER modify, edit, delete, or clone user datasets as part of troubleshooting
-- NEVER call `fo.delete_dataset()` unless the user explicitly requests it
-- NEVER truncate, wipe, or alter dataset contents or sample fields to diagnose an issue
+- Except when given explicit and direct instructions by the user:
+    - NEVER modify, edit, delete, or clone user datasets as part of troubleshooting
+    - NEVER call `fo.delete_dataset()`
+    - NEVER truncate, wipe, or alter dataset contents or sample fields to diagnose an issue
 - Use FiftyOne's read-only API to inspect state: `fo.list_datasets()`, `fo.load_dataset()`, `len(dataset)`, `dataset.get_field_schema()` — these are safe
 - FiftyOne's state (datasets, fields, brain runs) is the ground truth; read it, never rewrite it to "fix" a problem
 
@@ -41,7 +42,7 @@ Wait for a yes before executing anything that modifies files, config, or data.
 
 ### 4. Never modify config or files silently
 - NEVER change `database_uri`, `database_name`, or any config file without showing what will change and getting approval
-- NEVER append to shell profiles (`.zshrc`, `.bash_profile`, virtualenv `activate`) without showing the exact line and confirming
+- NEVER append to shell profiles (`.zshrc`, `.bash_profile`, virtualenv `activate`) without showing the exact line change and getting explicit user confirmation to apply
 
 ### 5. Restart processes after env / config changes
 Any fix that sets an environment variable or modifies a config file only takes effect for **new** processes. Already-running App servers, service managers, and Python scripts will NOT pick up the change.
@@ -50,7 +51,7 @@ Any fix that sets an environment variable or modifies a config file only takes e
 - Stop stale processes: `pkill -f "fiftyone"` (confirm with user first)
 
 ### 6. Always verify after fixing
-Run the Health Check after every fix to confirm the environment is operational.
+Run the [Health Check](#health-check) after every fix to confirm the environment is operational.
 
 ---
 
@@ -67,7 +68,7 @@ Run the Health Check after every fix to confirm the environment is operational.
 
 ## Diagnostic Quick-Check
 
-Handles connection failures gracefully — always produces useful output:
+Handles connection failures gracefully — always produce useful output:
 
 ```python
 import sys
@@ -81,7 +82,7 @@ try:
     print(f"Database: {fo.config.database_name}")
     print(f"DB URI:   {fo.config.database_uri or '(internal MongoDB)'}")
 except ImportError:
-    print("ERROR: fiftyone not installed — run: pip install fiftyone")
+    print("ERROR: fiftyone not installed — check Python environment, if needed run: pip install fiftyone")
     sys.exit(1)
 
 try:
@@ -98,7 +99,7 @@ except Exception as e:
 
 Run after any fix to confirm the environment is fully operational.
 
-> This script creates and destroys a **temporary test dataset** (`_fo_health_check`). It does not touch any user datasets. Do not manually create a dataset with that name.
+> This script creates and destroys a **temporary test dataset** (`_fo_health_check`). It does not touch any user datasets. Do not manually create a dataset with the name "_fo_health_check".
 
 ```python
 import fiftyone as fo

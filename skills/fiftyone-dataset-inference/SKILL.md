@@ -69,11 +69,11 @@ launch_app(dataset_name="my-dataset")
 
 ### Step 4: Discover and Apply Model
 
-Ask the user what they want to do (detection, classification, segmentation, embeddings, or a specific model name). Then determine the path:
+Ask the user about the task, model, or type of data they're using (detection, classification, segmentation, embeddings, or a specific model name); note users may give a 'tool name' (see Path B). Then determine the path:
 
 **Path A — Zoo model (most common)**
 
-Fetch the live model list — never assume what's available:
+ALWAYS first fetch the live model list — never assume what's available:
 ```python
 get_operator_schema(operator_uri="@voxel51/zoo/apply_zoo_model")
 ```
@@ -135,7 +135,7 @@ close_app()
 
 ## Model Discovery
 
-**Always fetch the live model list — never rely on a hardcoded list.**
+**ALWAYS fetch the live model list — never rely on a hardcoded list.**
 
 ```python
 get_operator_schema(operator_uri="@voxel51/zoo/apply_zoo_model")
