@@ -43,6 +43,13 @@ Thumbs.db
 # Logs
 *.log
 
+# Validation scripts (local-only, from cursor/plugin-template)
+scripts/
+
+# Notebook test outputs
+*_output.ipynb
+.notebook-test-env/
+
 # Agents
 .cursor
 .claude

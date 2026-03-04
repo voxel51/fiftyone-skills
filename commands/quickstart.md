@@ -1,4 +1,5 @@
 ---
+name: quickstart
 description: Guided quickstart for FiftyOne - choose between user workflows (import, inference, visualization) or developer workflows (plugin development)
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: help
 description: Get help with FiftyOne skills, understand available workflows, and troubleshoot setup issues
 ---
 

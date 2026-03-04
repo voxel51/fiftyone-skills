@@ -1,0 +1,18 @@
+{
+  "name": "fiftyone-skills",
+  "owner": {
+    "name": "Voxel51"
+  },
+  "metadata": {
+    "description": "Agent Context Protocol (ACP) skills for computer vision workflows using FiftyOne.",
+    "version": "1.0.3"
+  },
+  "plugins": [
+    {
+      "name": "fiftyone-skills",
+      "source": ".",
+      "skills": "skills",
+      "description": "Agent Context Protocol (ACP) skills for computer vision workflows using FiftyOne."
+    }
+  ]
+}
