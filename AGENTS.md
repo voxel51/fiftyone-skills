@@ -219,6 +219,40 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `TUTORIAL-TEMPLATES.md` - Intermediate deep-dive templates
 - `RECIPE-TEMPLATES.md` - Quick practical recipe templates
 
+### FiftyOne Dataset Curation (`fiftyone-dataset-curation/`)
+
+**When to use:** User wants to curate a dataset, check data quality, audit annotations, analyze class distributions, explore the embedding space, find duplicates, create curated subsets, build train/val/test splits, or ask natural language questions about a dataset.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-curation/SKILL.md`
+
+**Key requirements:**
+- FiftyOne MCP server must be running
+- `@voxel51/brain` plugin for brain operations
+- `@voxel51/utils` plugin for metadata and quality ops
+- `@voxel51/evaluation` plugin for annotation audit (mistakenness)
+- FiftyOne App must be launched before brain operators
+
+**Workflow summary (8 phases, any can be run individually):**
+1. Dataset loading (optional — delegates to fiftyone-dataset-import)
+2. Dataset inspection (schema, fields, counts)
+3. Data quality audit (metadata, corruption, resolution, aspect ratio)
+4. Near-duplicate detection (delegates to fiftyone-find-duplicates)
+5. Class distribution and imbalance analysis
+6. Embedding exploration and gap detection (delegates to fiftyone-embeddings-visualization)
+7. Annotation audit (mistakenness, hardness, IoU dedup)
+8. Curated subset creation and train/val/test splits
+
+**Reference files:**
+- `QUALITY-CHECKS.md` - Image quality filtering details
+- `ANNOTATION-AUDIT.md` - Annotation error detection
+- `SUBSET-CREATION.md` - Subset and split workflows
+
+**Related skills:**
+- `fiftyone-dataset-import` (Phase 0 data loading)
+- `fiftyone-find-duplicates` (Phase 3 deduplication)
+- `fiftyone-embeddings-visualization` (Phase 5 exploration)
+- `fiftyone-dataset-inference` (required prereq for Phase 6 annotation audit)
+
 ### FiftyOne Troubleshoot (`fiftyone-troubleshoot/`)
 
 **When to use:** User encounters a recurring FiftyOne problem: dataset disappeared, App won't open, changes not saving, MongoDB errors, video codec failures, notebook connectivity issues, missing plugins, or any common pain point.

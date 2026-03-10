@@ -45,6 +45,12 @@
       "description": "Visualize datasets in 2D using embeddings with UMAP or t-SNE dimensionality reduction. Use when users want to explore dataset structure, find clusters in images, identify outliers, color samples by class or metadata, or understand data distribution."
     },
     {
+      "name": "fiftyone-dataset-curation",
+      "source": "./skills/fiftyone-dataset-curation",
+      "skills": "./",
+      "description": "End-to-end dataset curation for any FiftyOne dataset: inspect schema and media quality (blur, brightness, corruption, resolution), audit annotation quality (mistakenness, hardness, duplicate labels, IoU overlaps), analyze class distributions and imbalances, explore embedding space and data gaps, find near/exact duplicates, create curated subsets using semantic search and brain ops, build train/val/test splits, and answer natural language questions about your data. Delegates to fiftyone-find-duplicates and fiftyone-embeddings-visualization. Requires FiftyOne MCP server with @voxel51/brain and @voxel51/utils plugins."
+    },
+    {
       "name": "fiftyone-develop-plugin",
       "source": "./skills/fiftyone-develop-plugin",
       "skills": "./",
