@@ -53,3 +53,6 @@ scripts/
 # Agents
 .cursor
 .claude
+
+# uv
+.python-version

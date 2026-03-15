@@ -54,7 +54,23 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 
 ### Step 1: Install Skills
 
-**Universal Installer** (Recommended):
+**Python Package** (New!):
+```bash
+pip install fiftyone-skills
+
+# Install locally for Claude Code
+fiftyone-skills env=local agent=claude
+
+# Install globally for Cursor  
+fiftyone-skills env=global agent=cursor
+
+# Update to latest from GitHub
+fiftyone-skills env=local agent=claude --update
+```
+
+See [INSTALL.md](INSTALL.md) for complete installation guide and all options.
+
+**Universal Installer**:
 ```bash
 curl -sL skil.sh | sh -s -- voxel51/fiftyone-skills
 ```
