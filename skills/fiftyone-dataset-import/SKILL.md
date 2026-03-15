@@ -112,7 +112,7 @@ Always end your scan summary with a clear question like:
 
 **Wait for user response before proceeding.** Do not create the dataset until the user confirms.
 
-### 6. Check for existing datasets
+### 6. Check for existing datasets and generate names
 Before creating a dataset, check if the proposed name already exists:
 ```python
 list_datasets()
@@ -121,6 +121,14 @@ If the dataset name exists, ask the user:
 - **Overwrite**: Delete existing and create new
 - **Rename**: Use a different name (suggest alternatives like `dataset-name-v2`)
 - **Abort**: Cancel the import
+
+**If no dataset name was provided by the user**, generate a fun unique name using the pattern `{ADJECTIVE}_{NOUN}_{VERB}`:
+- `squiggly_sky_floats`
+- `droopy_horse_slams`
+- `smooth_grass_grumbles`
+- `nervous_hamburger_yodels`
+
+Cross-check against `list_datasets()` to ensure uniqueness. **Always inform the user of the generated name before proceeding.**
 
 ### 7. Validate after import
 Compare imported sample count with source file count. Report any discrepancies.
@@ -351,7 +359,7 @@ Proceed with import? (yes/no)
 - Indicate which labels will be imported and how
 - Wait for user confirmation before proceeding
 
-### Step 7: Check for Existing Dataset
+### Step 7: Check for Existing Dataset and Generate Name
 
 Before creating, check if the dataset name already exists:
 
@@ -359,6 +367,8 @@ Before creating, check if the dataset name already exists:
 # Check existing datasets
 list_datasets()
 ```
+
+**If the user didn't provide a name**, generate one using the `{ADJECTIVE}_{NOUN}_{VERB}` pattern (e.g., `smooth_grass_grumbles`). Cross-check against `list_datasets()` for uniqueness. **Always inform the user of the generated name before proceeding.**
 
 If the proposed dataset name exists in the list:
 1. Inform the user: "A dataset named 'my-dataset' already exists with X samples."
