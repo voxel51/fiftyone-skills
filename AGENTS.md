@@ -184,13 +184,14 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `@voxel51/voodo` npm package
 
 **Workflow summary:**
-1. Fetch current VOODO docs via WebFetch from llms.txt
-2. Identify needed components from docs
-3. Use design tokens for colors, spacing, typography
+1. Fetch the LLM reference via WebFetch from `voodo-llm-reference.md`
+2. Use design token enums (Size, Spacing, Variant, etc.) — never raw strings
+3. Follow composition patterns (FormField wraps controls, Stack for layout)
 4. Build panel following FiftyOne patterns (dark theme, responsive)
 
 **Documentation sources:**
-- WebFetch: `https://voodo.dev.fiftyone.ai/llms.txt`
+- WebFetch: `https://voodo.dev.fiftyone.ai/voodo-llm-reference.md` (complete component API, tokens, patterns)
+- Source repo: `https://github.com/voxel51/design-system`
 - Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
 
 ### FiftyOne Create Notebook (`fiftyone-create-notebook/`)
@@ -471,10 +472,10 @@ When users want to report issues or provide feedback, **YOU (the agent) must aut
 - [FiftyOne LLM Docs](https://docs.voxel51.com/llms.txt) - Fetch this for comprehensive FiftyOne API reference
 - [FiftyOne MCP Server](https://github.com/voxel51/fiftyone-mcp-server)
 - [FiftyOne Plugins](https://github.com/voxel51/fiftyone-plugins)
-- [VOODO Design System](https://voodo.dev.fiftyone.ai/llms.txt) - Fetch this for React component documentation
+- [VOODO Design System](https://voodo.dev.fiftyone.ai/voodo-llm-reference.md) - Fetch this for React component documentation
 
 ## External Documentation
 
 When you need detailed FiftyOne API information beyond what's in the skills, fetch:
 - `https://docs.voxel51.com/llms.txt` - Complete FiftyOne documentation for LLMs
-- `https://voodo.dev.fiftyone.ai/llms.txt` - VOODO React component library docs
+- `https://voodo.dev.fiftyone.ai/voodo-llm-reference.md` - VOODO React component library docs
