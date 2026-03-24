@@ -13,7 +13,7 @@ description: Evaluates FiftyOne plugins for quality, security, and agent-readine
 Read every source and configuration file of the plugin. Common file extensions: `.py`, `.ts`, `.tsx`, `.js`, `.yaml`, `.yml`, and `.json`. Never construct an assessment of a plugin without first reading every line of every source file.
 
 ### 2. Security first
-Check for dangerous patterns before anything else. A plugin with perfect code quality but a hidden `subprocess.call()` sending data to an external server is a critical failure.
+Check for dangerous patterns before anything else. A plugin with perfect code quality that violates established and well known security best practices, is an immediate critical failure.
 
 ### 3. Be specific and actionable
 Every finding must include: what's wrong, where it is (file + line), why it matters, and how to fix it. Never say "improve code quality" without pointing to the exact issue.
@@ -22,7 +22,7 @@ Every finding must include: what's wrong, where it is (file + line), why it matt
 A plugin by a trusted org with security issues still gets a security failure. A community plugin with great code still gets credit. Judge the code, not the author.
 
 ### 5. Check the real plugin framework
-Always verify against the actual FiftyOne plugin system. Use MCP tools to list operators, get schemas, and check registration — don't just read files.
+Always verify the plugin under assessment against the actual FiftyOne plugin system. Use MCP tools to list operators, get schemas, and check registration — don't just read files.
 
 ```python
 list_plugins(enabled=True)
@@ -30,7 +30,7 @@ list_operators(builtin_only=False)
 get_operator_schema(operator_uri="@org/operator-name")
 ```
 
-## Workflow
+## Evaluation Workflow
 
 ### Phase 1: Manifest & Structure
 
@@ -49,10 +49,10 @@ Check the plugin is well-formed before loading it.
 - If no `skills:` section exists, note this as an observation — the plugin does not ship with companion skills for AI assistants. This is not a penalty, but plugins with skills have higher agent success rates.
 
 **1.3 File structure:**
-- `__init__.py` (or declared `py_entry`) exists
+- `__init__.py` exists
 - Every operator in manifest has a matching class in the Python entry file
 - Every panel in manifest has a matching class
-- If panels declared: `dist/index.umd.js` exists (built JS bundle)
+- If panels declare: `dist/index.umd.js` exists (built JS bundle)
 - `requirements.txt` exists if the plugin imports non-standard packages
 
 **1.3 Dependencies:**
@@ -68,7 +68,7 @@ Check the plugin is well-formed before loading it.
 **2.1 Filesystem access — scan all Python files for:**
 ```python
 # CRITICAL: Look for these patterns
-open(            # File read/write — is it within the plugin directory or dataset paths?
+open()           # File read/write — is it within the plugin directory or dataset paths?
 os.path          # Path manipulation — is it accessing user home, SSH keys, credentials?
 shutil           # File copying — where is it copying to?
 pathlib          # Same as os.path
@@ -82,7 +82,7 @@ glob.glob        # File discovery — what directories is it scanning?
 **2.2 Network access — scan for:**
 ```python
 # CRITICAL: Look for these patterns
-requests.        # HTTP calls — to where?
+requests         # HTTP calls — to where?
 urllib           # Same
 http.client      # Same
 socket           # Raw sockets — almost never legitimate for a plugin
@@ -100,14 +100,15 @@ httpx            # Same
 subprocess       # Shell commands — what commands?
 os.system        # Same
 os.popen         # Same
-exec(            # Dynamic code execution
-eval(            # Same
+exec()           # Dynamic code execution
+eval()           # Same
 __import__       # Dynamic imports
+importlib        # Another pattern for dynamic imports
 ```
 
 **Acceptable:** Running specific, documented external tools (e.g., `ffmpeg` for video processing in an I/O plugin).
 **Suspicious:** Running arbitrary shell commands, especially quietly or in an obfuscated manner, with user-provided input.
-**Critical:** `exec()` or `eval()` on any data that comes from outside the plugin.
+**Critical:** `exec()` or `eval()` on any string, bytes, or arbitrary code not directly included in plaintext with the plugin.
 
 **2.4 Environment variable access:**
 ```python
@@ -118,7 +119,7 @@ os.getenv        # Reading specific env vars — which ones?
 
 **Acceptable:** Reading env vars that match the plugin's declared `secrets` in `fiftyone.yml`.
 **Suspicious:** Reading env vars not declared as secrets (e.g., `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`).
-**Critical:** Iterating over `os.environ` to dump all environment variables.
+**Critical:** Iterating over `os.environ` to dump all environment variables or sending environment variable contents to locations not related to service authentication.
 
 **2.5 Data exfiltration patterns — check for combinations:**
 - Reads a file + makes a network call in the same function → suspicious
@@ -129,7 +130,7 @@ os.getenv        # Reading specific env vars — which ones?
 
 **2.6 Dependency supply chain:**
 - Check `requirements.txt` for known malicious packages
-- Check for typosquatting (e.g., `reqeusts` instead of `requests`)
+- Check for typos (e.g., `reqeusts` instead of `requests`)
 - Flag packages with very low download counts or no source repository
 
 **Fail criteria:** Any critical finding in 2.1–2.5 → plugin is unsafe, stop eval and report immediately.
@@ -147,7 +148,7 @@ list_operators()            # All declared operators visible?
 - All operators from manifest appear in registry
 - No name collisions with builtin `@voxel51/*` operators
 
-**3.2 MCP tool exposure:**
+**3.2 MCP tool exposure: (Optional)** 
 - Operators that should be LLM-accessible are exposed as MCP tools
 - Internal/helper operators are correctly marked as `unlisted=True`
 - Each exposed tool has a description that would help an LLM choose it
@@ -192,11 +193,11 @@ Check that operators are correctly classified by danger level.
 **5.2 Destructive operations:**
 - Any operator that deletes samples, fields, datasets, or files should have `allow_delegated_execution=True` or require confirmation
 - Check for: `dataset.delete_samples()`, `dataset.delete_field()`, `sample.delete()`, `shutil.rmtree()`, `os.remove()`
-- These MUST NOT be auto-executable without user confirmation
+- Destructive operations MUST NOT be auto-executable without user confirmation
 
 **5.2 Data modification:**
 - Operators that modify sample fields, add labels, or change metadata should be clearly labeled
-- Users should know what will change before execution
+- Users must be notified of all expected changes before execution
 
 **5.3 External side effects:**
 - Operators that make API calls, send data externally, or trigger external systems should require explicit user consent
@@ -241,11 +242,11 @@ Check that an LLM agent can effectively use this plugin's tools.
 
 **7.3 Ambiguity check:**
 - No two operators in the plugin have overlapping descriptions
-- The distinction between similar operators is clear (e.g., "import images" vs "import labels")
+- The distinction between similar operators is clear (e.g., "import_images" vs "import_labels")
 
 **7.4 Companion skills:**
 - Check if the plugin declares `skills:` in `fiftyone.yml` (verified in Phase 1.2)
-- If skills exist, verify they provide clear step-by-step workflows that reference the plugin's operators
+- If skills exist, verify each skill provides a clear step-by-step workflow that reference the plugin's operators
 - If no skills exist and the plugin has >3 operators that are typically used in sequence, recommend creating one — it would improve agent success rate significantly
 
 ## Report Format
