@@ -53,7 +53,7 @@ Check the plugin is well-formed before loading it.
 - Every operator in manifest has a matching class in the Python entry file
 - Every panel in manifest has a matching class
 - If panels declare: `dist/index.umd.js` exists (built JS bundle)
-- `requirements.txt` exists if the plugin imports non-standard packages
+- `requirements.txt` exists if the plugin imports third-party packages (anything not in Python's standard library, packages that require `pip install`)
 
 **1.3 Dependencies:**
 - All Python imports resolve (`importlib.util.find_spec`)
@@ -76,8 +76,8 @@ glob.glob        # File discovery — what directories is it scanning?
 ```
 
 **Acceptable:** Reading/writing within FiftyOne dataset directories, plugin directory, temp files.
-**Suspicious:** Reading `~/.ssh/`, `~/.aws/`, `~/.config/`, `/etc/`, or any path outside FiftyOne scope.
-**Critical:** Writing to system directories or reading credential files. Plugin properly leverages and handles environment variables 
+**Suspicious:** Reading `~/.ssh/`, `~/.aws/`, `~/.config/`, `/etc/`, or any path outside FiftyOne scope. On Windows, equivalent suspicious paths are `%USERPROFILE%\.ssh\`, `%USERPROFILE%\.aws\`, `%APPDATA%\`, and `C:\Windows\System32\`. Credential access must go through the `fiftyone.yml` `secrets:` mechanism (see 2.4) — direct filesystem reads of credential files bypass the user consent contract even if the secret is declared in the manifest.
+**Critical:** Writing to system directories or reading credential files. Plugin properly leverages and handles environment variables
 
 **2.2 Network access — scan for:**
 ```python
@@ -117,7 +117,7 @@ os.environ       # Reading ALL env vars — plugins should only use declared sec
 os.getenv        # Reading specific env vars — which ones?
 ```
 
-**Acceptable:** Reading env vars that match the plugin's declared `secrets` in `fiftyone.yml`.
+**Acceptable:** Reading env vars that match the plugin's declared `secrets` in `fiftyone.yml`. This is the only legitimate credential access path — even if a secret is declared, reading the same credential from disk (e.g., `~/.aws/`) is still suspicious (see 2.1).
 **Suspicious:** Reading env vars not declared as secrets (e.g., `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`).
 **Critical:** Iterating over `os.environ` to dump all environment variables or sending environment variable contents to locations not related to service authentication.
 
@@ -155,7 +155,8 @@ list_operators()            # All declared operators visible?
 
 **3.3 Startup behavior:**
 - If any operator has `on_startup=True`, verify it executes cleanly
-- Startup operators should be fast (< 1 second) and side-effect free
+- Startup operators should be fast (< 1 second) — they block App initialization
+- Side effects must be limited to lightweight initialization (loading config, registering state) — no data mutations, network calls, or heavy computation at startup
 
 ### Phase 4: Schema & Contract Quality
 
@@ -174,11 +175,12 @@ get_operator_schema(operator_uri="@org/operator-name")
 
 **4.2 Output schemas:**
 - `resolve_output()` exists for operators that return meaningful data
-- Output types match what `execute()` actually returns
+- Output types match what `execute()` actually returns — where type annotations are absent, check that fields declared in `resolve_output()` are referenced in `execute()` and vice versa (flag mismatches as warnings, not failures)
 
 **4.3 Error handling:**
 - Empty params → clean validation error, not a crash
-- Wrong types → clean error message
+- Required parameters that are empty → clean validation error with a clear message shown to the user, no crash or unhandled exception
+- Wrong types (`TypeError`) or invalid values (`ValueError`) → clean error message shown to the user, no unhandled exception
 - Missing required fields → clear indication of what's missing
 
 ### Phase 5: Risk Classification
@@ -214,12 +216,12 @@ Check the plugin follows FiftyOne conventions.
 **6.1 FiftyOne patterns:**
 - Uses `ctx.target_view()` for processing (not raw `ctx.dataset`)
 - Uses `ctx.store()` with namespaced keys (not generic "data" or "config")
-- Delegated execution for operations processing >100 samples
-- Generator pattern (`execute_as_generator`) for operations >1 second
+- Operators performing compute-heavy work (model inference, brain ops, bulk field writes) should expose `allow_delegated_execution=True` so users can opt in — delegation should be available but not forced
+- Operators that iterate over dataset samples should use `execute_as_generator` for memory efficiency and progress reporting
 - Progress reporting for long operations
 
 **6.2 Code style:**
-- Follows `fiftyone-code-style` conventions (imports, naming, aliases)
+- Optionally follows `fiftyone-code-style` conventions (imports, naming, aliases) — flag deviations as suggestions, not failures
 - No hardcoded dataset names, file paths, or model names
 - Dynamic discovery via `list_operators()`, `get_operator_schema()` instead of assumptions
 
@@ -228,9 +230,9 @@ Check the plugin follows FiftyOne conventions.
 - TTL set on cached data (not storing forever)
 - No reading other plugins' store keys
 
-### Phase 7: Agent Discoverability
+### Phase 7: Agent Discoverability (Optional)
 
-Check that an LLM agent can effectively use this plugin's tools.
+Check that an LLM agent can effectively use this plugin's tools. Flag all findings in this phase as suggestions, not failures — agent discoverability is a quality improvement, not a requirement.
 
 **7.1 Tool naming:**
 - All operator names, that are **not** unlisted `unlisted=True`, describe what they do (`compute_embeddings`, not `run_pipeline_v2`)
@@ -257,8 +259,8 @@ Generate the report in this structure:
 # Plugin Eval Report: {plugin_name}
 
 ## Summary
-- **Overall Score:** {score}/100
-- **Security:** {PASS | WARN | FAIL}
+- **Security Gate:** {PASS | WARN | FAIL} — if FAIL, stop here: DO NOT INSTALL
+- **Overall Score:** {score}/100 (N/A if Security = FAIL; capped at 70 if Security = WARN)
 - **Quality:** {score}/100
 - **Agent Readiness:** {score}/100
 - **Critical Issues:** {count}
@@ -280,32 +282,31 @@ Generate the report in this structure:
 {Ordered list: most impactful fix first, with specific instructions}
 
 ## Component Scores
-| Area | Score | Key Finding |
-|------|-------|-------------|
-| Manifest & Structure | {score} | {one-line summary} |
-| Security & Trust | {score} | {one-line summary} |
-| Registration & MCP | {score} | {one-line summary} |
-| Schema & Contract | {score} | {one-line summary} |
-| Risk Classification | {score} | {one-line summary} |
-| Code Quality | {score} | {one-line summary} |
-| Agent Discoverability | {score} | {one-line summary} |
+| Area | Score (0–100) | Key Finding |
+|------|--------------|-------------|
+| Manifest & Structure | {score}/100 | {one-line summary} |
+| Security & Trust | {score}/100 | {one-line summary} |
+| Registration & MCP | {score}/100 | {one-line summary} |
+| Schema & Contract | {score}/100 | {one-line summary} |
+| Risk Classification | {score}/100 | {one-line summary} |
+| Code Quality | {score}/100 | {one-line summary} |
+| Agent Discoverability | {score}/100 | {one-line summary} |
 ```
 
 ## Scoring
 
-**Overall = weighted average:**
-- Security & Trust: 30% (safety is non-negotiable)
-- Schema & Contract: 20% (correctness matters)
-- Agent Discoverability: 15% (usability for LLM agents)
-- Risk Classification: 15% (user safety)
-- Code Quality: 10% (maintainability)
-- Registration & MCP: 5% (basic functionality)
-- Manifest & Structure: 5% (basic hygiene)
+**Security is a hard gate — evaluate before scoring:**
+- **FAIL** (1+ critical findings) → stop evaluation, overall score = N/A, verdict = DO NOT INSTALL
+- **WARN** (1+ suspicious findings) → proceed with scoring, cap overall score at 70/100
+- **PASS** (0 critical findings) → proceed with full scoring
 
-**Security scoring:**
-- 0 critical findings → PASS
-- 1+ suspicious findings → WARN (usable with caution)
-- 1+ critical findings → FAIL (do not install)
+**Overall = weighted average of remaining components (only if Security = PASS or WARN):**
+- Schema & Contract: 25% (correctness matters)
+- Agent Discoverability: 20% (usability for LLM agents)
+- Risk Classification: 20% (user safety)
+- Code Quality: 15% (maintainability)
+- Registration & MCP: 10% (basic functionality)
+- Manifest & Structure: 10% (basic hygiene)
 
 ## Quick Reference
 
@@ -317,8 +318,8 @@ Generate the report in this structure:
 | `subprocess` + user input | Critical | Command injection risk |
 | `exec()` / `eval()` | Critical | Arbitrary code execution |
 | `requests.post()` + dataset data | Critical | Data exfiltration |
-| `open("/etc/...")` | Critical | System file access |
-| `open("~/.ssh/...")` | Critical | Credential theft |
+| `open("/etc/...")` / `open("C:\\Windows\\...")` | Critical | System file access |
+| `open("~/.ssh/...")` / `open("%USERPROFILE%\\.ssh\\...")` | Critical | Credential theft |
 | `socket.connect()` | Suspicious | Raw network access |
 | `os.getenv("AWS_*")` undeclared | Suspicious | Accessing secrets not in manifest |
 | `shutil.copytree()` to external path | Suspicious | Data copying |
@@ -336,6 +337,8 @@ Generate the report in this structure:
 | 0-29 | Unsafe or fundamentally broken |
 
 ## Troubleshooting
+
+> For general FiftyOne environment issues (database errors, App won't open, missing plugins, MongoDB failures), use the `fiftyone-troubleshoot` skill — it covers issues outside the scope of plugin evaluation.
 
 **Plugin won't load for evaluation:**
 - Check `fiftyone.yml` exists and has valid YAML syntax
