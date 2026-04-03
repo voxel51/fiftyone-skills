@@ -92,6 +92,7 @@
       "skills": "./",
       "description": "Generate a Data Lens connector from an external database schema. Use when users want to connect an external data source (PostgreSQL, BigQuery, Databricks, MySQL, SQLite, etc.) to FiftyOne Data Lens, create a DataLensOperator from a CREATE TABLE statement or column list, or build a plugin that lets users browse and import data from their database through the FiftyOne App."
     },
+    {
       "name": "fiftyone-eval-plugin",
       "source": "./skills/fiftyone-eval-plugin",
       "skills": "./",
