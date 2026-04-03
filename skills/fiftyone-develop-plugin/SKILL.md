@@ -343,11 +343,13 @@ fiftyone app debug <dataset-name>     # with a dataset pre-loaded
 def execute(self, ctx):
     # Use print() for quick debugging (shows in server terminal)
     print(f"Params received: {ctx.params}")
-    print(f"Dataset: {ctx.dataset.name}, View size: {len(ctx.view)}")
+    print(f"View stages: {ctx.view.stages}")           
+    print(f"View pipeline: {ctx.view._pipeline()}")    
 
     # For structured logging
     import logging
-    logging.info(f"Processing {len(ctx.target_view())} samples")
+    logging.debug(f"View stages: {ctx.target_view().stages}")
+    logging.debug(f"View pipeline: {ctx.target_view()._pipeline()}")
 
     # ... rest of execution
 ```

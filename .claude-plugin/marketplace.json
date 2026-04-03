@@ -85,6 +85,12 @@
       "source": "./skills/fiftyone-troubleshoot",
       "skills": "./",
       "description": "Diagnose and fix common FiftyOne issues automatically. Use when a dataset disappeared, the App won't open, changes aren't saving, MongoDB errors occur, video codecs fail, notebook connectivity breaks, operators are missing, or any recurring FiftyOne pain point needs solving. Includes a NEVER-DO safety section to prevent accidental data loss or direct MongoDB manipulation."
+    },
+    {
+      "name": "fiftyone-eval-plugin",
+      "source": "./skills/fiftyone-eval-plugin",
+      "skills": "./",
+      "description": "Evaluates FiftyOne plugins for quality, security, and agent-readiness. Use when reviewing a plugin before installation, auditing an existing plugin, validating a plugin you just built, or assessing community plugins for safety. Checks manifest integrity, security risks (filesystem access, network calls, command execution, data exfiltration), schema quality, risk classification, code conventions, and agent discoverability. Produces a structured report with scores and actionable recommendations."
     }
   ]
 }

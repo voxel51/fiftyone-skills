@@ -285,6 +285,34 @@ This repository contains skills for computer vision workflows using FiftyOne and
 5. Add new issues to the skill as they are encountered
 6. Verify environment status by running a diagnostic check
 
+### FiftyOne Eval Plugin (`fiftyone-eval-plugin/`)
+
+**When to use:** User wants to evaluate a FiftyOne plugin for quality, security, or agent-readiness. Also use when reviewing a community plugin before installation, auditing an existing plugin, or validating a plugin you just built with the develop-plugin skill.
+
+**Instructions:** Load the skill file at `skills/fiftyone-eval-plugin/SKILL.md`
+
+**Key requirements:**
+- FiftyOne installed
+- FiftyOne MCP server for registration and schema checks
+- Access to the plugin source code (local directory)
+
+**Workflow summary (7 phases):**
+1. Manifest & Structure — Validate `fiftyone.yml` completeness and file structure
+2. Security & Trust — Scan for dangerous patterns (filesystem access, network calls, command execution, env var harvesting, data exfiltration)
+3. Registration & MCP — Verify operators register and are exposed as MCP tools
+4. Schema & Contract — Check input/output schemas, error handling, validation boundaries
+5. Risk Classification — Verify destructive operations are correctly classified as HIGH risk
+6. Code Quality — Check FiftyOne conventions, store key scoping, execution patterns
+7. Agent Discoverability — Evaluate tool names and descriptions for LLM usability
+
+**Output:** Structured report with overall score (0-100), security assessment (PASS/WARN/FAIL), per-area scores, critical issues, warnings, and actionable recommendations.
+
+**Security weight:** 30% of overall score. FiftyOne plugins run unsandboxed with full filesystem, network, and subprocess access. This skill is the first line of defense for community plugins.
+
+**Related skills:**
+- `fiftyone-develop-plugin` (for fixing code quality issues found by eval)
+- `fiftyone-code-style` (for fixing style issues found by eval)
+
 ### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
 
 **When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.

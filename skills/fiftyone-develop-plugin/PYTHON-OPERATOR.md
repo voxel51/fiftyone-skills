@@ -617,14 +617,16 @@ def execute(self, ctx):
     print(f"=== DEBUG: {self.config.name} ===")
     print(f"Params: {ctx.params}")
     print(f"Dataset: {ctx.dataset.name}")
-    print(f"View size: {len(ctx.view)}")
+    print(f"View stages: {ctx.view.stages}")           
+    print(f"View pipeline: {ctx.view._pipeline()}")
     print(f"Selected: {ctx.selected}")
 
     # Structured logging
     import logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    logger.debug(f"Processing view with {len(ctx.target_view())} samples")
+    logger.debug(f"View stages: {ctx.target_view().stages}")
+    logger.debug(f"View pipeline: {ctx.target_view()._pipeline()}")
 
     # Inspect store contents
     store = ctx.store("my_store")
@@ -639,7 +641,7 @@ def execute(self, ctx):
 |-------|----------------|
 | Operator not found | Check `fiftyone.yml`, run `list_operators()` |
 | Params missing | Print `ctx.params` at start of `execute()` |
-| Wrong view/samples | Print `len(ctx.view)`, `len(ctx.target_view())`, `ctx.selected` |
+| Wrong view/samples | Print `ctx.view.stages`, `ctx.view._pipeline()`, `ctx.selected` |
 | Store not persisting | Print `store.list_keys()` before and after |
 | Silent failure | Wrap in try/except, print exception |
 
