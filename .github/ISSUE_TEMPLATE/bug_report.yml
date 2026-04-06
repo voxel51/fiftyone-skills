@@ -1,0 +1,86 @@
+name: Bug Report
+description: Report incorrect or broken skill behavior
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! This template is for **broken skill behavior** — cases where the skill gave wrong instructions or failed in an unexpected way.
+
+        > **Tip:** For interactive debugging, ask your AI assistant `"Help me submit feedback about [issue]"` — it will automatically gather your session context and environment info.
+
+  - type: input
+    id: skill_name
+    attributes:
+      label: Skill Name
+      description: Which skill is affected? (e.g., `fiftyone-find-duplicates`)
+      placeholder: fiftyone-my-skill
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_went_wrong
+    attributes:
+      label: What did the skill do wrong?
+      description: Describe the incorrect behavior clearly.
+      placeholder: The skill told the agent to call `compute_similarity` before launching the App, which caused an executor error.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this? Include the prompt you gave the AI assistant.
+      placeholder: |
+        1. Load the `fiftyone-find-duplicates` skill
+        2. Say: "Find duplicate images in my quickstart dataset"
+        3. Agent called `execute_operator` with `@voxel51/brain/compute_similarity` before launching the App
+        4. Got error: "Executor not available"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should the skill have instructed the agent to do?
+      placeholder: The skill should instruct the agent to launch the App first, then call compute_similarity.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai_assistant
+    attributes:
+      label: AI Assistant Used
+      options:
+        - Claude Code
+        - Cursor
+        - Codex / OpenCode
+        - Gemini CLI
+        - Goose
+        - Amp
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: fiftyone_version
+    attributes:
+      label: FiftyOne Version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: mcp_version
+    attributes:
+      label: MCP Server Version (if applicable)
+      placeholder: "0.1.0"
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Logs, screenshots, or anything else that helps explain the issue

@@ -1,0 +1,85 @@
+name: New Skill Proposal
+description: Propose a new skill or workflow for FiftyOne Skills
+title: "[New Skill]: "
+labels: ["new-skill", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a new skill! Skills teach AI assistants to perform complex computer vision workflows autonomously.
+
+        Before submitting, check [existing skills](https://github.com/voxel51/fiftyone-skills/tree/main/skills) and [open proposals](https://github.com/voxel51/fiftyone-skills/issues?q=is%3Aopen+label%3Anew-skill) to avoid duplicates.
+
+  - type: input
+    id: skill_name
+    attributes:
+      label: Skill Name
+      description: Proposed skill directory name (e.g., `fiftyone-active-learning`)
+      placeholder: fiftyone-my-skill
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What does this skill do?
+      description: Describe the workflow this skill would enable. What can an AI assistant do with it?
+      placeholder: |
+        This skill guides an AI assistant to run active learning cycles on a FiftyOne dataset —
+        selecting the most informative unlabeled samples for annotation using brain similarity.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem does this solve? Who would use it and when?
+      placeholder: |
+        Data scientists spending time manually selecting samples for labeling.
+        This skill would automate the selection step using FiftyOne's brain methods.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fiftyone_features
+    attributes:
+      label: FiftyOne Features / Operators Used
+      description: Which FiftyOne operators, brain methods, or plugins would this skill rely on?
+      placeholder: |
+        - `@voxel51/brain/compute_similarity`
+        - `@voxel51/brain/compute_representativeness`
+        - `fiftyone.brain.compute_uniqueness`
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: ai_assistants
+    attributes:
+      label: Target AI Assistants
+      description: Which AI assistants are you targeting or have tested with?
+      options:
+        - label: Claude Code
+        - label: Cursor
+        - label: Codex / OpenCode
+        - label: Gemini CLI
+        - label: Goose
+        - label: Other
+
+  - type: dropdown
+    id: willing_to_implement
+    attributes:
+      label: Are you willing to implement this?
+      options:
+        - "Yes — I'll submit a PR"
+        - "Maybe — I'd need some guidance"
+        - "No — just proposing the idea"
+    validations:
+      required: true
+
+  - type: input
+    id: discord
+    attributes:
+      label: Discord Handle (optional)
+      description: Join us at discord.gg/fiftyone-community to discuss this proposal
+      placeholder: yourhandle
