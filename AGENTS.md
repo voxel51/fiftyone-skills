@@ -313,6 +313,31 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `fiftyone-develop-plugin` (for fixing code quality issues found by eval)
 - `fiftyone-code-style` (for fixing style issues found by eval)
 
+### FiftyOne Generate Data Lens Connector (`fiftyone-generate-data-lens-connector/`)
+
+**When to use:** User has an external database schema and wants to generate a Data Lens connector, connect an external data source (PostgreSQL, BigQuery, Databricks, MySQL, SQLite, etc.) to FiftyOne Data Lens, or build a plugin that lets users browse and import data from their database through the FiftyOne App.
+
+**Instructions:** Load the skill file at `skills/fiftyone-generate-data-lens-connector/SKILL.md`
+
+**Note:** Data Lens is a FiftyOne Enterprise feature. The skill will notify OSS users before proceeding.
+
+**Key requirements:**
+- FiftyOne Enterprise deployment (Data Lens is enterprise-only)
+- Database schema (DDL, column list, or live introspection)
+- Database driver package for the target database
+
+**Workflow summary:**
+1. Understand the schema (accept DDL, column lists, or introspection output)
+2. Identify key columns (filepath, labels, metadata, coordinates)
+3. Propose field mapping table for user approval
+4. Generate connector plugin (`__init__.py`, `fiftyone.yml`, `requirements.txt`)
+5. Validate (syntax check, sample construction, code walkthrough)
+6. Iterate on feedback (filters, coordinate normalization, NULLs)
+
+**Reference files:**
+- `CONNECTOR-TEMPLATE.md` - Annotated connector code template with adaptation checklist
+- `FIELD-MAPPING-GUIDE.md` - Database type to FiftyOne field type mapping rules
+
 ### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
 
 **When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.
