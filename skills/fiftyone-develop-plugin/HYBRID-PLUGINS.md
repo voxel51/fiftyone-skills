@@ -31,6 +31,14 @@
 - Client-side logic only
 - No backend processing needed
 
+> **Warning — Modal Panels:** The `composite_view=True` pattern shown in this
+> document does NOT work reliably for modal panels. It produces "Unsupported
+> View" errors because the App cannot match the component name to the JS
+> registry. For panels in the sample modal, use the **JS Panel + Python
+> Operators** architecture described in the
+> [Modal Panels section of JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md#modal-panels).
+> The hybrid/composite_view approach below is for **grid panels only**.
+
 ---
 
 ## Architecture Overview

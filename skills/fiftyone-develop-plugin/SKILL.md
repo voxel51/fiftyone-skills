@@ -173,7 +173,10 @@ Understand what the user needs to accomplish:
 ### Phase 2: Design
 
 1. Search existing plugins for similar patterns
-2. For panels, default to **hybrid** (Python + JavaScript). See [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md).
+2. **Choose the right panel architecture:**
+   - **Modal panel** (appears in sample modal) → Use **JS Panel + Python Operators**. See [JAVASCRIPT-PANEL.md — Modal Panels](JAVASCRIPT-PANEL.md#modal-panels). Do NOT use `composite_view=True` — it produces "Unsupported View" errors for modal panels.
+   - **Grid panel with rich UI** → Use **hybrid** (Python + JavaScript). See [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md).
+   - **Grid panel with simple UI** → Use **Python-only**. See [PYTHON-PANEL.md](PYTHON-PANEL.md).
 3. Create plan with:
    - Plugin name (`@org/plugin-name`)
    - File structure

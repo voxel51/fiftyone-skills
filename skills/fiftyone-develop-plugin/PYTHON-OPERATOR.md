@@ -104,6 +104,13 @@ def execute(self, ctx):
     # Selected sample IDs (from App)
     selected = ctx.selected
 
+    # Current modal sample ID (when executed from a modal context)
+    # IMPORTANT: this is a string ID, NOT a Sample object
+    sample_id = ctx.current_sample              # "6507a1b2c3d4e5f6..."
+    sample = ctx.dataset[sample_id]             # Fetch the actual Sample
+    filepath = sample.filepath
+    # WRONG: ctx.current_sample.filepath → AttributeError (it's a string)
+
     # Plugin secrets (from environment)
     api_key = ctx.secrets["API_KEY"]
 
