@@ -14,6 +14,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![FiftyOne](https://img.shields.io/badge/FiftyOne-v1.10+-orange.svg)](https://github.com/voxel51/fiftyone)
 [![MCP Server](https://img.shields.io/badge/MCP%20Server-fiftyone--mcp-green.svg)](https://github.com/voxel51/fiftyone-mcp-server)
+[![Validate Skills](https://github.com/voxel51/fiftyone-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/voxel51/fiftyone-skills/actions/workflows/validate.yml)
 
 [![Discord](https://img.shields.io/badge/Discord-7289DA?logo=discord&logoColor=white)](https://discord.gg/fiftyone-community)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-purple?style=flat&logo=huggingface)](https://huggingface.co/Voxel51)
@@ -212,16 +213,11 @@ Common errors and solutions
 
 ## Contributing
 
-We welcome contributions! Here's how to create a new skill:
+We welcome contributions! Whether you want to add a new skill, improve an existing one, or help with integrations and tooling — there's a place for you here.
 
-1. **Fork** this repository
-2. **Copy** an existing skill folder (e.g., `skills/fiftyone-find-duplicates/`)
-3. **Update** `SKILL.md` with your workflow
-4. **Add** your skill to `.claude-plugin/marketplace.json`
-5. **Test** with your AI assistant
-6. **Submit** a Pull Request
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide, including skill structure requirements, the quality bar, and how to test your skill before submitting.
 
-See [find-duplicates SKILL.md](skills/fiftyone-find-duplicates/SKILL.md) for a complete example.
+Looking for ideas? Browse issues labeled [`help wanted`](https://github.com/voxel51/fiftyone-skills/labels/help%20wanted) or [`good first issue`](https://github.com/voxel51/fiftyone-skills/labels/good%20first%20issue), or check the [project milestones](https://github.com/voxel51/fiftyone-skills/milestones) for planned work.
 
 ## Feedback
 
