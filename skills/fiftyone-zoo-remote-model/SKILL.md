@@ -44,7 +44,7 @@ Copy `template/`:
 - [ ] Image ops return single `fo.Label` (dicts only for video frame-level, integer keys).
 - [ ] One-known-example coordinate check passed.
 - [ ] `dataset.apply_model(model)` runs with default `num_workers`.
-- [ ] On macOS: no `ModuleNotFoundError` from workers.
+- [ ] On macOS, run `dataset.apply_model(model, ...)` with default `num_workers` and confirm no `ModuleNotFoundError` from spawned workers.
 
 **On failure**, route by symptom:
 
