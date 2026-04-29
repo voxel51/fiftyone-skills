@@ -1,0 +1,18 @@
+{
+    "name": "your-org/your-model",
+    "url": "https://github.com/your-org/your-model",
+    "models": [
+        {
+            "base_name": "your-org/your-model-variant",
+            "base_filename": "your-model-variant",
+            "author": "Your Name",
+            "description": "Brief description.",
+            "requirements": {
+                "packages": ["torch"],
+                "cpu": {"support": true},
+                "gpu": {"support": true}
+            },
+            "tags": ["torch"]
+        }
+    ]
+}

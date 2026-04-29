@@ -159,6 +159,30 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `PYTHON-PANEL.md` - Python panel development
 - `JAVASCRIPT-PANEL.md` - JavaScript/React panel development
 
+### FiftyOne Zoo Remote Model (`fiftyone-zoo-remote-model/`)
+
+**When to use:** User wants to integrate a model into FiftyOne's remote model zoo (detection, classification, segmentation, embedding, keypoint, or VLM), or debug zoo registration, manifest issues, or DataLoader pickle errors.
+
+**Instructions:** Load the skill file at `skills/fiftyone-zoo-remote-model/SKILL.md`
+
+**Key requirements:**
+- FiftyOne installed
+- Model framework (`torch`, `transformers`, etc.)
+
+**Workflow summary:**
+1. Phase 0 — Confirm integration surface
+2. Phase 1 — Scaffold from `template/`
+3. Phase 2 — Implement (class hierarchy, predict dispatch, label types, DataLoader)
+4. Phase 3 — Validate (manifest, imports, label return, multi-worker on macOS)
+
+**Reference files:**
+- `MANIFEST.md` - Manifest schema and entry points
+- `MODEL-CLASS.md` - Class hierarchy and predict dispatch
+- `DATALOADER.md` - Worker pickle constraints
+- `LABEL-TYPES.md` - Return types and coordinates
+- `DEBUGGING-PRINCIPLES.md` - Six universal principles
+- `VLM-PATTERNS.md` - VLM-specific patterns
+
 ### FiftyOne Code Style (`fiftyone-code-style/`)
 
 **When to use:** User wants to write Python code following FiftyOne conventions, contribute to FiftyOne, or ensure code matches FiftyOne's style.
