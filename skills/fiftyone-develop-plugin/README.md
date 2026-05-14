@@ -39,7 +39,7 @@ my-plugin/
 Install the generated plugin:
 
 ```bash
-fiftyone plugins create ./my-plugin
+fiftyone plugins create my-plugin
 ```
 
 ## See also

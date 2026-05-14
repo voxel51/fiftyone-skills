@@ -30,17 +30,6 @@ The skill checks for the required fields, runs the evaluation protocol, and open
 
 ## Example
 
-```python
-import fiftyone as fo
-import fiftyone.zoo as foz
-
-# Load a dataset with predictions
-dataset = foz.load_zoo_dataset("quickstart")
-
-import fiftyone.zoo as foz
-model = foz.load_zoo_model("yolov8n-coco-torch")
-dataset.apply_model(model, label_field="predictions")
-```
 
 Then ask your assistant:
 
