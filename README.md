@@ -58,6 +58,7 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 | 🧹 [**Dataset Curation**](skills/fiftyone-dataset-curation/SKILL.md) | End-to-end curation: quality checks, annotation audit, duplicates, class distribution, splits | Yes |
 | 🔧 [**Troubleshoot**](skills/fiftyone-troubleshoot/SKILL.md) | Fix common issues: dataset persistence, App connection, MongoDB errors, codecs, performance | — |
 | 🛡️ [**Eval Plugin**](skills/fiftyone-eval-plugin/SKILL.md) | Evaluate plugins for quality, security, and agent-readiness. Produces a structured report | — |
+| 🔌 [**Generate Data Lens Connector**](skills/fiftyone-generate-data-lens-connector/SKILL.md) | Generate a Data Lens connector from an external database schema (PostgreSQL, BigQuery, MySQL, etc.) | — |
 
 ## Quick Start
 

@@ -89,7 +89,34 @@ Add an entry for your skill under the **Available Skills** section of `AGENTS.md
 3. ...
 ```
 
-### 8. Submit a Pull Request
+### 8. Add your skill to the README table
+
+Add a row to the **Available Skills** table in `README.md`. Follow the existing format:
+
+```markdown
+| 🤖 [**My Skill**](skills/fiftyone-my-skill/SKILL.md) | One-line description of what the skill does | Yes |
+```
+
+Pick the emoji that best matches the skill's category (📥 Import, 📤 Export, 🔍 QA, 🤖 Inference, 📈 Evaluation, 📊 Embeddings, 🧹 Curation, 🏷️ Annotation, 🔌/🎨/📝/📓 Development, 🔧/🛡️ Support).
+
+### 9. Add your skill to `.claude-plugin/marketplace.json`
+
+Add an entry to the `plugins` array in `.claude-plugin/marketplace.json`. This is the structured data source used to generate the FiftyOne docs skills page:
+
+```json
+{
+  "name": "fiftyone-my-skill",
+  "source": "./skills/fiftyone-my-skill",
+  "skills": "./",
+  "emoji": "🤖",
+  "category": "General",
+  "description": "One or two sentences describing what the skill does and when to use it."
+}
+```
+
+Use the same emoji and category as the README table row.
+
+### 10. Submit a Pull Request
 
 Push your branch and open a PR against `main`. The PR template will guide you through the checklist.
 
