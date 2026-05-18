@@ -14,7 +14,6 @@ When prompted, select **fiftyone-dataset-curation** from the menu.
 
 - [FiftyOne](https://docs.voxel51.com/getting_started/install.html)
 - [FiftyOne MCP Server](https://github.com/voxel51/fiftyone-mcp-server)
-- [FiftyOne Brain](https://github.com/voxel51/fiftyone-brain)
 
 ## Usage
 

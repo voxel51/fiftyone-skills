@@ -14,8 +14,7 @@ When prompted, select **fiftyone-embeddings-visualization** from the menu.
 
 - [FiftyOne](https://docs.voxel51.com/getting_started/install.html)
 - [FiftyOne MCP Server](https://github.com/voxel51/fiftyone-mcp-server)
-- [FiftyOne Brain](https://github.com/voxel51/fiftyone-brain) (`pip install fiftyone-brain`)
-- `@voxel51/brain` plugin
+- [`@voxel51/brain`](https://github.com/voxel51/fiftyone-plugins/tree/main/plugins/brain) plugin
 
 ## Usage
 

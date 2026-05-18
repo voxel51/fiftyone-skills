@@ -29,12 +29,29 @@ The skill scans your data, auto-detects the format and media types, and loads th
 
 ## Example
 
+```bash
+# Download sample COCO data to ~/fiftyone/coco-2017/validation
+fiftyone zoo datasets download coco-2017 --split validation
+```
+
+Then ask your assistant:
+
+```
+"Import the COCO 2017 validation dataset from ~/fiftyone/coco-2017/validation and name it coco-2017-validation"
+```
+
+After the skill runs, verify in Python:
+
 ```python
 import fiftyone as fo
-
-# After the skill runs, access your dataset
-dataset = fo.load_dataset("my-dataset")
+dataset = fo.load_dataset("coco-2017-validation")
 print(dataset)
+```
+
+Or ask your assistant to open it in the App:
+
+```
+"Launch the FiftyOne App with the coco-2017-validation dataset"
 ```
 
 ## See also
