@@ -126,7 +126,7 @@ class MyHybridPanel(Panel):
 
     def get_status(self, ctx):
         """Return current processing status"""
-        store = ctx.store(f"my_plugin_{ctx.dataset._doc.id}")
+        store = ctx.store(f"my_plugin_{ctx.dataset.name}")
         return {"status": store.get("status") or "idle"}
 ```
 
@@ -145,7 +145,7 @@ class ProcessingOperator(foo.Operator):
 
     def execute(self, ctx):
         plugin_name = self.config.name.split("/")[-1]
-        store = ctx.store(f"{plugin_name}_{ctx.dataset._doc.id}")
+        store = ctx.store(f"{plugin_name}_{ctx.dataset.name}")
 
         total = len(ctx.target_view())
         for i, sample in enumerate(ctx.target_view()):
@@ -485,7 +485,7 @@ class ProcessorPanel(Panel):
         )
 
     def on_load(self, ctx):
-        store = ctx.store(f"processor_{ctx.dataset._doc.id}")
+        store = ctx.store(f"processor_{ctx.dataset.name}")
         ctx.panel.set_data("status", store.get("status") or "idle")
 
     def render(self, ctx):
