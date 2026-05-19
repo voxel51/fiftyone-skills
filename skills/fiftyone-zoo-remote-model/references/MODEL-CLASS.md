@@ -62,20 +62,9 @@ class MyBaseModel(fom.Model, fom.SamplesMixin, SupportsGetItem, TorchModelMixin)
 
 ## predict / predict_all — input dispatch
 
-**FiftyOne always passes `PIL.Image` to `predict_all`** when the model inherits `SupportsGetItem` and/or `TorchModelMixin`. Every framework call site loads the image before calling the model:
+`dataset.apply_model` always passes `PIL.Image` to `predict_all`. The framework loads the image from `sample.filepath` before calling the model, so do **not** add an `isinstance(_, str)` branch — it is dead code. The accepted input types are documented on the public contracts `fiftyone.core.models.Model.predict_all` (numpy HWC / NHWC) and `fiftyone.utils.torch.TorchImageModel.predict_all` (PIL / numpy / Torch tensor); neither lists `str`.
 
-| Framework path | Source of input | Where (`fiftyone/core/models.py`) |
-|---|---|---|
-| `_apply_image_model_data_loader` (DataLoader) | `ImageGetItem(raw_inputs=True)` → `PIL.Image` | dispatch lines 184–191; call lines 498–502 |
-| `_apply_image_model_single` (fallback) | `foui.read(sample.filepath)` → `PIL.Image` | line 372, then `model.predict(img)` line 375 |
-| `_apply_image_model_batch` (fallback batch) | `foui.read(...)` → list of `PIL.Image` | line 417, then `model.predict_all(imgs)` line 420 |
-| `_apply_image_model_to_frames_*` (video frames) | numpy frame array from `FFmpegVideoReader` | line 566, line 672 |
-
-The `Model.predict_all` contract (`fiftyone/core/models.py:2365`) lists "uint8 numpy arrays (HWC) or numpy array tensors (NHWC)". `TorchImageModel.predict_all` (`fiftyone/utils/torch.py:873`) lists "PIL images, uint8 numpy arrays, Torch tensors". Neither mentions `str`. A structural search across `fiftyone/utils/*.py` finds **zero** `isinstance(_, str)` dispatch inside any `predict` / `predict_all` — no first-party model accepts a filepath string.
-
-**Implication:** the template only needs the `PIL.Image` branch. A `str` (filepath) branch is dead code — `dataset.apply_model` never produces it and no first-party model contract supports it.
-
-For non-VLM models the body is trivial — accept the image directly:
+For non-VLM models, accept the image directly:
 
 ```python
 def predict(self, arg, sample=None):
