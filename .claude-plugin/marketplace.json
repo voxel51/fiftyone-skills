@@ -97,6 +97,12 @@
       "source": "./skills/fiftyone-eval-plugin",
       "skills": "./",
       "description": "Evaluates FiftyOne plugins for quality, security, and agent-readiness. Use when reviewing a plugin before installation, auditing an existing plugin, validating a plugin you just built, or assessing community plugins for safety. Checks manifest integrity, security risks (filesystem access, network calls, command execution, data exfiltration), schema quality, risk classification, code conventions, and agent discoverability. Produces a structured report with scores and actionable recommendations."
+    },
+    {
+      "name": "fiftyone-zoo-remote-model",
+      "source": "./skills/fiftyone-zoo-remote-model",
+      "skills": "./",
+      "description": "Use when integrating a model into FiftyOne's remote model zoo: detection, classification, segmentation, embedding, keypoint, or vision-language (VLM) models loaded via register_zoo_model_source and load_zoo_model, then applied with dataset.apply_model. Also for debugging zoo registration, manifest.json issues, custom fom.Model / TorchModelMixin subclasses, DataLoader pickle errors, or worker ModuleNotFoundError from spawned DataLoader workers."
     }
   ]
 }
