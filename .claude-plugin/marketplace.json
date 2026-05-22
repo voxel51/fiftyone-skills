@@ -132,6 +132,8 @@
       "name": "fiftyone-zoo-remote-model",
       "source": "./skills/fiftyone-zoo-remote-model",
       "skills": "./",
+      "emoji": "🧩",
+      "category": "Development",
       "description": "Integrate models into FiftyOne's remote model zoo. Use when wrapping a model (detection, classification, segmentation, embedding, keypoint, or vision-language) for `register_zoo_model_source` and `load_zoo_model` so it works with `dataset.apply_model`, debugging zoo registration, fixing `manifest.json` issues, building custom `fom.Model` / `TorchModelMixin` subclasses, or resolving DataLoader pickle errors and `ModuleNotFoundError` from spawned multi-worker DataLoader workers."
     }
   ]
