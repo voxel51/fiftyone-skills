@@ -50,3 +50,6 @@ Thumbs.db
 # Agents
 .cursor
 .claude
+
+# uv
+.python-version

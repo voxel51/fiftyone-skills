@@ -1,0 +1,46 @@
+[project]
+name = "fiftyone-skills"
+version = "0.1.0"
+description = "Expert workflows for computer vision powered by AI assistants"
+readme = "README.md"
+authors = [
+    { name = "Burhan-Q", email = "burhan@voxel51.com" }
+]
+requires-python = ">=3.10"
+dependencies = []
+license = { text = "Apache-2.0" }
+keywords = ["fiftyone", "computer-vision", "ai", "skills", "workflows"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/voxel51/fiftyone-skills"
+Repository = "https://github.com/voxel51/fiftyone-skills"
+Documentation = "https://docs.voxel51.com"
+
+[project.scripts]
+fiftyone-skills = "fiftyone_skills:main"
+
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+data = { data = "skills" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
