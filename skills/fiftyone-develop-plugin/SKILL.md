@@ -5,6 +5,43 @@ description: Develops custom FiftyOne plugins (operators and panels) from scratc
 
 # Develop FiftyOne Plugins
 
+## TL;DR — Read This First
+
+**Step 1: Decide what you're building.**
+
+| Goal | Type | Read next |
+|------|------|-----------|
+| Run a computation, process samples, trigger actions | **Operator** | [PYTHON-OPERATOR.md](PYTHON-OPERATOR.md) |
+| Persistent panel in the grid, simple/form UI | **Python Panel** | [PYTHON-PANEL.md](PYTHON-PANEL.md) |
+| Persistent panel in the grid, rich/interactive UI | **Hybrid Panel** | [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md) + [JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md) |
+| Panel that opens inside the sample modal | **JS Modal Panel** | [JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md) |
+
+**Step 2: Read that file NOW — before generating any code.** Each file contains patterns that are not in SKILL.md. Missing them causes the most common failures (wrong `default=` usage, handler binding errors, panel not appearing in App).
+
+**If something isn't rendering or you hit an error:** Read [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for the one-shot diagnostic command, reload vs restart table, and the top 5 error patterns with exact fixes.
+
+**For input types, Panel UI components reference, and a minimal working example:** Read [QUICK-REFERENCE.md](QUICK-REFERENCE.md).
+
+**Step 3: Clone the official plugins repo for reference patterns:**
+```bash
+git clone https://github.com/voxel51/fiftyone-plugins.git /tmp/fiftyone-plugins 2>/dev/null || true
+```
+
+**Step 4: Install your plugin by placing it (or symlinking it) in the plugins directory:**
+```bash
+PLUGINS_DIR=$(python -c "import fiftyone as fo; print(fo.config.plugins_dir)")
+# Convention: use underscores in the directory name (e.g. myorg_my_plugin) for shell compatibility
+# The @org/name URI lives only inside fiftyone.yml — the directory name doesn't need to match
+ln -s /path/to/my_plugin "$PLUGINS_DIR/my_plugin"
+```
+
+**Step 5: Launch in debug mode so you see all server logs:**
+```bash
+fiftyone app debug <dataset-name>
+```
+
+---
+
 ## Key Directives
 
 **ALWAYS follow these rules:**
@@ -46,7 +83,24 @@ Write tests:
 
 Verify in FiftyOne App before done.
 
-### 5. Iterate on feedback
+### 5. Test complex logic outside the plugin first
+
+If the plugin wraps non-trivial processing (model inference, image transforms, external APIs), verify that logic works as standalone Python before integrating it into the plugin:
+
+```python
+# Test independently first
+result = my_processing_fn(sample_path)
+print(result)  # confirm correctness
+
+# Only then wrap in execute()
+def execute(self, ctx):
+    result = my_processing_fn(ctx.dataset.first().filepath)
+    ...
+```
+
+This prevents debugging two systems (plugin framework + custom logic) at once.
+
+### 6. Iterate on feedback
 
 Run server separately to see logs:
 ```bash
@@ -70,6 +124,65 @@ Refine until the plugin works as expected.
 
 ## Critical Patterns
 
+### Gotcha 1 — `default=` must never reference state (causes infinite render loops)
+
+```python
+# WRONG — triggers a render loop: schema changes → re-render → schema changes → ...
+def render(self, ctx):
+    panel = types.Object()
+    panel.str("threshold", default=ctx.panel.get_state("threshold"))  # ← NEVER do this
+
+# CORRECT — pass a literal; read state separately for display logic
+def render(self, ctx):
+    panel = types.Object()
+    panel.str("threshold", default="0.5")  # literal only
+    current = ctx.panel.get_state("threshold", "0.5")  # read separately if needed
+```
+
+The `default=` value is part of the schema the frontend uses to decide whether to re-render. If it changes between renders (because state changed), the frontend re-dispatches, which re-renders, infinitely.
+
+### Gotcha 2 — Event handlers must be bound instance methods, not static methods
+
+```python
+# WRONG — @staticmethod strips __self__, breaking the handler URI silently
+@staticmethod
+def on_click(ctx):
+    ...
+
+panel.btn("btn", label="Go", on_click=MyPanel.on_click)  # ← broken
+
+# CORRECT — regular instance method
+def on_click(self, ctx):
+    ...
+
+panel.btn("btn", label="Go", on_click=self.on_click)  # ← works
+```
+
+The framework reads `handler.__self__.uri` to build the operator-trigger URI. A `@staticmethod` has no `__self__`, so the wiring silently fails and button clicks do nothing.
+
+### Gotcha 3 — Missing `register(p)` is a silent failure
+
+```python
+# WRONG — plugin loads, no error, but ZERO operators appear in the App
+import fiftyone.operators as foo
+
+class MyPanel(foo.Panel):
+    ...
+
+# forgot register() entirely — or it raises an exception silently
+```
+
+```python
+# CORRECT — must explicitly register every operator and panel
+def register(p):
+    p.register(MyPanel)
+    p.register(MyOperator)  # each class must be listed
+```
+
+The plugin loader calls `module.register(self)` after importing `__init__.py`. If the function is missing, raises an exception, or simply doesn't call `p.register(YourClass)` for a class, that class is never inserted into the operator registry. The App shows the plugin as **enabled** in `list_plugins()` — no error, no warning — but the operator or panel is completely invisible. This is the most common cause of "my panel doesn't appear in the + New panel menu."
+
+**Convention on directory naming:** Use `myorg_my_plugin` (underscores, no `@` or `-`) for clarity and shell compatibility. This is convention, not a hard requirement — the loader derives the module name from `fiftyone.yml`'s `name:` field and sanitizes it automatically. The `@org/name` URI belongs in `fiftyone.yml`; the directory just needs to contain that file.
+
 ### Operator Execution
 ```python
 # Chain operators (non-delegated operators only, in execute() only, fire-and-forget)
@@ -77,7 +190,7 @@ ctx.trigger("@plugin/other_operator", params={...})
 
 # UI operations
 ctx.ops.notify("Done!")
-ctx.ops.set_progress(0.5)
+ctx.ops.set_progress(progress=0.5)  # keyword required — first positional arg is label, not progress
 ```
 
 ### View Selection
@@ -92,12 +205,12 @@ view = ctx.target_view()
 
 ### Store Keys (Avoid Collisions)
 ```python
-# Use namespaced keys to avoid cross-dataset conflicts
-def _get_store_key(self, ctx):
-    plugin_name = self.config.name.split("/")[-1]
-    return f"{plugin_name}_store_{ctx.dataset._doc.id}_{self.version}"
+# ctx.store() already scopes by dataset_id internally — no need to embed dataset name.
+# Use a plugin-unique name to avoid collisions with other plugins on the same dataset.
+def _get_store_key(self):
+    return self.config.name.split("/")[-1]  # e.g. "my_panel"
 
-store = ctx.store(self._get_store_key(ctx))
+store = ctx.store(self._get_store_key())
 ```
 
 ### Panel State vs Execution Store
@@ -107,7 +220,7 @@ store = ctx.store(self._get_store_key(ctx))
 
 def on_load(self, ctx):
     ctx.panel.state.selected_tab = "overview"  # Transient
-    store = ctx.store(self._get_store_key(ctx))
+    store = ctx.store(self._get_store_key())
     ctx.panel.state.config = store.get("user_config") or {}  # Persistent
 ```
 
@@ -188,6 +301,17 @@ See [PLUGIN-STRUCTURE.md](PLUGIN-STRUCTURE.md) for file formats.
 
 ### Phase 3: Generate Code
 
+**Before writing any code, read the reference file for your plugin type:**
+
+| Building… | Read this file first |
+|-----------|---------------------|
+| Operator | **[PYTHON-OPERATOR.md](PYTHON-OPERATOR.md)** — input types, execution patterns, placement |
+| Python panel | **[PYTHON-PANEL.md](PYTHON-PANEL.md)** — layout containers, state/data/store, event lifecycle |
+| JS/hybrid panel | **[JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md)** + **[HYBRID-PLUGINS.md](HYBRID-PLUGINS.md)** — React components, Python↔JS bridge |
+| Persistent storage | **[EXECUTION-STORE.md](EXECUTION-STORE.md)** — TTL caching, cross-session state |
+| Something not rendering / errors | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** — one-shot diagnostic, top 5 errors, reload vs restart |
+| Input types, Panel UI components, minimal example | **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** — lookup tables and copy-paste starting point |
+
 Create these files:
 
 | File | Required | Purpose |
@@ -197,13 +321,6 @@ Create these files:
 | `requirements.txt` | If deps | Python dependencies |
 | `package.json` | JS only | Node.js metadata |
 | `src/index.tsx` | JS only | React components |
-
-Reference docs:
-- [PYTHON-OPERATOR.md](PYTHON-OPERATOR.md) - Python operators
-- [PYTHON-PANEL.md](PYTHON-PANEL.md) - Python panels
-- [JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md) - React/TypeScript panels
-- [HYBRID-PLUGINS.md](HYBRID-PLUGINS.md) - Python + JavaScript communication
-- [EXECUTION-STORE.md](EXECUTION-STORE.md) - Persistent storage and caching
 
 **For JavaScript panels with rich UI**: Invoke the `fiftyone-voodo-design` skill for VOODO components (buttons, inputs, toasts, design tokens). VOODO is FiftyOne's official React component library.
 
@@ -245,144 +362,44 @@ execute_operator(operator_uri="@myorg/my-operator", params={...})
 
 ## Quick Reference
 
-### Plugin Types
+For the full input types table, Panel UI components, config option tables, and a minimal working example:
 
-| Type | Language | Use Case |
-|------|----------|----------|
-| Operator | Python | Data processing, computations |
-| Panel | Hybrid (default) | Python backend + React frontend (recommended) |
-| Panel | Python-only | Simple UI without rich interactivity |
-
-### Operator Config Options
-
-| Option | Default | Effect |
-|--------|---------|--------|
-| `dynamic` | False | Recalculate inputs on change |
-| `execute_as_generator` | False | Stream progress with yield |
-| `allow_immediate_execution` | True | Execute in foreground |
-| `allow_delegated_execution` | False | Background execution |
-| `default_choice_to_delegated` | False | Default to background |
-| `unlisted` | False | Hide from operator browser |
-| `on_startup` | False | Execute when app starts |
-| `on_dataset_open` | False | Execute when dataset opens |
-
-### Panel Config Options
-
-| Option | Default | Effect |
-|--------|---------|--------|
-| `allow_multiple` | False | Allow multiple panel instances |
-| `surfaces` | "grid" | Where panel can display ("grid", "modal", "grid modal") |
-| `category` | None | Panel category in browser |
-| `priority` | None | Sort order in UI |
-
-### Input Types
-
-| Type | Method |
-|------|--------|
-| Text | `inputs.str()` |
-| Number | `inputs.int()` / `inputs.float()` |
-| Boolean | `inputs.bool()` |
-| Dropdown | `inputs.enum()` |
-| File | `inputs.file()` |
-| View | `inputs.view_target()` |
-
-## Minimal Example
-
-**fiftyone.yml:**
-```yaml
-name: "@myorg/hello-world"
-type: plugin
-operators:
-  - hello_world
-```
-
-**__init__.py:**
-```python
-import fiftyone.operators as foo
-import fiftyone.operators.types as types
-
-class HelloWorld(foo.Operator):
-    @property
-    def config(self):
-        return foo.OperatorConfig(
-            name="hello_world",
-            label="Hello World"
-        )
-
-    def resolve_input(self, ctx):
-        inputs = types.Object()
-        inputs.str("message", label="Message", default="Hello!")
-        return types.Property(inputs)
-
-    def execute(self, ctx):
-        print(ctx.params["message"])
-        return {"status": "done"}
-
-def register(p):
-    p.register(HelloWorld)
-```
-
-## Debugging
-
-### Where Logs Go
-
-| Log Type | Location |
-|----------|----------|
-| Python backend | Terminal running the server |
-| JavaScript frontend | Browser console (F12 → Console) |
-| Network requests | Browser DevTools (F12 → Network) |
-| Operator errors | Operator browser in FiftyOne App |
-
-### Running in Debug Mode (Recommended for Development)
-
-```bash
-fiftyone app debug                    # server logs printed to shell
-fiftyone app debug <dataset-name>     # with a dataset pre-loaded
-```
-
-### Python Debugging
-
-```python
-def execute(self, ctx):
-    # Use print() for quick debugging (shows in server terminal)
-    print(f"Params received: {ctx.params}")
-    print(f"View stages: {ctx.view.stages}")           
-    print(f"View pipeline: {ctx.view._pipeline()}")    
-
-    # For structured logging
-    import logging
-    logging.debug(f"View stages: {ctx.target_view().stages}")
-    logging.debug(f"View pipeline: {ctx.target_view()._pipeline()}")
-
-    # ... rest of execution
-```
-
-### JavaScript/TypeScript Debugging
-
-```typescript
-// Use console.log in React components
-console.log("Component state:", state);
-console.log("Panel data:", panelData);
-
-// Check browser DevTools:
-// - Console: JS errors, syntax errors, plugin load failures
-// - Network: API calls, variable values before/after execution
-```
-
-### Common Debug Locations
-
-- **Operator not executing**: Check Network tab for request/response
-- **Plugin not loading**: Check Console for syntax errors
-- **Variables not updating**: Check Network tab for payload data
-- **Silent failures**: Check Operator browser for error messages
+**→ Read [QUICK-REFERENCE.md](QUICK-REFERENCE.md) now.**
 
 ## Troubleshooting
+
+### One-shot plugin load diagnostic
+
+Run this first whenever a plugin or operator is missing from the App:
+
+```bash
+curl -s -X POST http://localhost:5151/operators \
+  -H 'Content-Type: application/json' -d '{}' \
+  | python -c "
+import json, sys
+d = json.load(sys.stdin)
+errors = d.get('errors', [])
+if errors:
+    print('PLUGIN LOAD ERRORS:')
+    for e in errors: print(' -', e)
+else:
+    print('No load errors. Operators found:', len(d.get('operators', [])))
+"
+```
+
+This returns every error the plugin loader captured — Python syntax errors, import failures, missing `register()` calls — in one shot. Check this before debugging anything else.
 
 **Plugin not appearing:**
 - Check `fiftyone.yml` exists in plugin root
 - Verify location: `~/.fiftyone/plugins/`
-- Check for Python syntax errors
+- Check `register(p)` is present and calls `p.register()` for each class — see Gotcha 3 above
+- Check for Python syntax errors (run the diagnostic above)
 - Restart FiftyOne App
+
+**Panel not appearing in the "+ New panel" menu:**
+- Plugin must load cleanly (check diagnostic above)
+- `PanelConfig.name` must match the entry under `panels:` in `fiftyone.yml`
+- Restart App after adding a new panel — the panel registry is built at startup
 
 **Operator not found:**
 - Verify operator listed in `fiftyone.yml`
@@ -392,6 +409,10 @@ console.log("Panel data:", panelData);
 **Secrets not available:**
 - Add to `fiftyone.yml` under `secrets:`
 - Set environment variables before starting FiftyOne
+
+**Render loop / thousands of operator calls per minute:**
+- Almost always caused by `default=ctx.panel.get_state(...)` — see Gotcha 1 above
+- Fix: replace with a string/number literal in `default=`
 
 ## Advanced
 

@@ -1,6 +1,8 @@
 # Python Operator Development
 
 ## Contents
+- [Scope](#scope)
+- [How Operators Work](#how-operators-work)
 - [Operator Anatomy](#operator-anatomy)
 - [OperatorConfig Options](#operatorconfig-options)
 - [Execution Context](#execution-context-ctx)
@@ -10,8 +12,40 @@
 - [Using Execution Store](#using-execution-store)
 - [Output Display](#output-display)
 - [Placement (UI Buttons)](#placement-ui-buttons)
+- [Boundary System](#boundary-system)
 - [Debugging Operators](#debugging-operators)
 - [Complete Example](#complete-example-label-exporter)
+
+---
+
+## Scope
+
+**This file covers:** Python operators using `foo.Operator` — input forms, execution logic, progress reporting, delegated execution, output display, and App placement.
+
+**Out of scope:**
+- Python panels (persistent UI with state) → see [PYTHON-PANEL.md](PYTHON-PANEL.md)
+- JavaScript/TypeScript operators → see [JAVASCRIPT-PANEL.md](JAVASCRIPT-PANEL.md)
+- Plugin structure and registration → see [PLUGIN-STRUCTURE.md](PLUGIN-STRUCTURE.md)
+- Debugging load/render errors → see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+---
+
+## How Operators Work
+
+An operator is a **request-response unit of work** triggered by the user from the operator browser, a button in the App, or another operator via `ctx.trigger()`.
+
+**Lifecycle:**
+1. User opens operator → `resolve_input(ctx)` builds the input form
+2. User fills form and clicks "Execute" → `execute(ctx)` runs (sync or delegated)
+3. Execution completes → `resolve_output(ctx)` builds the results display
+4. If `dynamic=True`, `resolve_input(ctx)` is re-called after every input change to update dependent fields
+
+**Key design rules:**
+- `resolve_input()` must be **fast and side-effect free** — it runs on every form keystroke when `dynamic=True`
+- `execute()` is where all work happens — reads `ctx.params`, accesses `ctx.dataset`/`ctx.view`, returns a dict
+- `resolve_output()` reads `ctx.results` (the dict returned by `execute()`) to build the display
+- Use `execute_as_generator=True` for long-running operations that need progress updates
+- Use `allow_delegated_execution=True` for operations that should run in the background (minutes to hours)
 
 ---
 
@@ -233,11 +267,16 @@ def resolve_input(self, ctx):
 def resolve_input(self, ctx):
     inputs = types.Object()
 
-    # File upload
+    # File path selector (opens file browser)
     inputs.file(
         "input_file",
+        label="Select File",
+    )
+
+    # File upload with content (content included in ctx.params)
+    inputs.uploaded_file(
+        "upload",
         label="Upload File",
-        types=[".json", ".csv"]  # Allowed extensions
     )
 
     # Directory path
@@ -248,6 +287,37 @@ def resolve_input(self, ctx):
     )
 
     return types.Property(inputs)
+```
+
+### Nested Objects
+
+Use `obj()` to group related fields, and `map()` for arbitrary key-value pairs:
+
+```python
+def resolve_input(self, ctx):
+    inputs = types.Object()
+
+    # Nested group of fields
+    config = inputs.obj("config", label="Model Config", view=types.View())
+    config.str("model_name", label="Model Name")
+    config.float("confidence", label="Confidence", min=0.0, max=1.0, default=0.5)
+    config.bool("use_gpu", label="Use GPU", default=True)
+
+    # Key-value map (e.g. custom metadata)
+    inputs.map(
+        "metadata",
+        key_type=types.String(),
+        value_type=types.String(),
+        label="Custom Metadata"
+    )
+
+    return types.Property(inputs)
+
+# In execute(), access nested values:
+def execute(self, ctx):
+    config = ctx.params.get("config", {})
+    model_name = config.get("model_name")
+    metadata = ctx.params.get("metadata", {})
 ```
 
 ### Dynamic Inputs
@@ -468,13 +538,13 @@ Use `ctx.store()` for persistent data across sessions:
 class CachedOperator(foo.Operator):
     version = "v1"
 
-    def _get_store_key(self, ctx):
-        """Generate unique store key."""
+    def _get_store_key(self):
+        # ctx.store() scopes by dataset_id automatically — just use a plugin-unique name
         plugin_name = self.config.name.split("/")[-1]
-        return f"{plugin_name}_{ctx.dataset._doc.id}_{self.version}"
+        return f"{plugin_name}_v{self.version}"
 
     def execute(self, ctx):
-        store = ctx.store(self._get_store_key(ctx))
+        store = ctx.store(self._get_store_key())
 
         # Check cache
         cache_key = f"result_{hash(str(ctx.params))}"
@@ -603,6 +673,20 @@ def resolve_placement(self, ctx):
 | `HISTOGRAM_ACTIONS` | Histogram panel actions |
 | `MAP_ACTIONS` | Map panel actions |
 
+## Boundary System
+
+| Action | Rule |
+|--------|------|
+| Reading `ctx.dataset`, `ctx.view`, `ctx.params`, `ctx.selected` | **Free** — reads only |
+| Calling `resolve_input()`, `resolve_output()`, `resolve_placement()` | **Free** — display only |
+| Writing sample fields, tagging samples, running model inference | **Confirm first** — data mutation |
+| `fo.delete_dataset()`, dropping indexes, overwriting labels without backup | **Never** without explicit user confirmation |
+| Running slow queries inside `resolve_input()` with `dynamic=True` | **Never** — runs on every keystroke |
+
+**Safe testing directive:** Clone the target dataset before testing mutations: `dataset.clone()`. Register the clone under a temporary name so the original is unchanged.
+
+---
+
 ## Debugging Operators
 
 ### Running Server for Logs
@@ -656,6 +740,28 @@ def execute(self, ctx):
 
 ## Complete Example: Label Exporter
 
+All files needed to run this plugin:
+
+**fiftyone.yml**
+```yaml
+name: "@myorg/label-exporter"
+version: "1.0.0"
+description: "Export sample labels to a JSON file"
+fiftyone:
+  version: ">=0.23"
+operators:
+  - export_labels
+```
+
+**Directory layout:**
+```
+~/.fiftyone/plugins/
+└── myorg_label_exporter/
+    ├── fiftyone.yml
+    └── __init__.py
+```
+
+**__init__.py**
 ```python
 import fiftyone.operators as foo
 import fiftyone.operators.types as types

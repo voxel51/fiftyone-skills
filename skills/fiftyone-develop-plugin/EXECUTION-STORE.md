@@ -39,27 +39,26 @@ def on_load(self, ctx):
 
 ## Store Key Strategy
 
-Use namespaced keys to avoid conflicts between plugins and datasets:
+Use a plugin-unique name to avoid collisions with other plugins. `ctx.store()` already scopes by `dataset_id` internally — no need to embed dataset name in the key.
 
 ```python
 class MyPanel(foo.Panel):
-    version = "v1"  # For migration support
+    version = "v1"  # Bump to invalidate cached data on schema changes
 
-    def _get_store_key(self, ctx):
-        """Generate unique store key for this panel instance."""
+    def _get_store_key(self):
+        """Plugin-unique store name. Dataset scoping is handled by ctx.store() automatically."""
         plugin_name = self.config.name.split("/")[-1]
-        dataset_id = ctx.dataset._doc.id
-        return f"{plugin_name}_store_{dataset_id}_{self.version}"
+        return f"{plugin_name}_v{self.version}"
 
     def on_load(self, ctx):
-        store = ctx.store(self._get_store_key(ctx))
+        store = ctx.store(self._get_store_key())
         # ...
 ```
 
 **Key components:**
-- **Plugin name**: Extracted from config, avoids hardcoding
-- **Dataset ID**: Prevents cross-dataset conflicts
-- **Version**: Enables migration when schema changes
+- **Plugin name**: Avoids collisions with other plugins on the same dataset
+- **Version** (optional): Invalidates cached data when schema changes
+- ~~**Dataset name**~~: Not needed — `ctx.store()` internally passes `dataset._doc.id` to the store backend
 
 ---
 
@@ -364,12 +363,12 @@ def _safe_get(self, ctx, key, default=None):
 class MyOperator(foo.Operator):
     version = "v1"
 
-    def _get_store_key(self, ctx):
+    def _get_store_key(self):
         plugin_name = self.config.name.split("/")[-1]
-        return f"{plugin_name}_{ctx.dataset._doc.id}_{self.version}"
+        return f"{plugin_name}_v{self.version}"
 
     def execute(self, ctx):
-        store = ctx.store(self._get_store_key(ctx))
+        store = ctx.store(self._get_store_key())
 
         # Check cache
         cached = store.get("result")
