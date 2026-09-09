@@ -31,6 +31,29 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - Hugging Face Hub (FiftyOne-formatted, parquet, or raw formats)
 - Multimodal grouped datasets (autonomous driving)
 
+### FiftyOne LeRobot Import (`fiftyone-lerobot-import/`)
+
+**When to use:** User wants to import LeRobot v3 robot-learning datasets (local or from Hugging Face Hub) as multimodal episode datasets, convert v2.x LeRobot datasets to v3, or mentions LeRobot, teleop recordings, robot episodes, or `observation.state`/`action` data.
+
+**Instructions:** Load the skill file at `skills/fiftyone-lerobot-import/SKILL.md`
+
+**Key requirements:**
+- `pyarrow>=10.0.0` for import
+- `huggingface_hub` package for HF Hub downloads
+- `lerobot` package for v2.x → v3 conversion only
+- No FiftyOne MCP server required — uses the Python SDK directly (`fo.Dataset.from_dir`)
+
+**Workflow summary:**
+1. Identify the source (local path or HF repo id)
+2. Download from Hugging Face Hub if needed
+3. Inspect layout and detect codebase version
+4. Convert v2.x → v3 if needed
+5. Confirm required packages before installing (STOP gate)
+6. Present import plan and get user confirmation (STOP gate)
+7. Check name collisions, then import with `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`
+8. Validate imported episode count against `meta/info.json`
+9. Launch App to view episodes, state/action plots, and streams
+
 ### FiftyOne Dataset Export (`fiftyone-dataset-export/`)
 
 **When to use:** User wants to export datasets to standard formats, share on Hugging Face Hub, convert between formats, or create training data archives.

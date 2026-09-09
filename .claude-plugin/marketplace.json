@@ -17,6 +17,14 @@
       "description": "Universal dataset import for FiftyOne supporting all media types (images, videos, point clouds, 3D scenes), all label formats (COCO, YOLO, VOC, CVAT, KITTI, etc.), multimodal grouped datasets, and Hugging Face Hub datasets. Use when users want to import any dataset regardless of format or source, load datasets from Hugging Face, handle autonomous driving data with multiple cameras and LiDAR, or create grouped datasets from multimodal data."
     },
     {
+      "name": "fiftyone-lerobot-import",
+      "source": "./skills/fiftyone-lerobot-import",
+      "skills": "./",
+      "emoji": "📥",
+      "category": "Import",
+      "description": "Import LeRobot v3 robot-learning datasets into FiftyOne as multimodal episode datasets using fo.types.LeRobotDataset. Use when downloading from Hugging Face Hub, converting v2.x datasets to v3, adding multiple sources with add_dir, or validating episode counts against meta/info.json."
+    },
+    {
       "name": "fiftyone-dataset-export",
       "source": "./skills/fiftyone-dataset-export",
       "skills": "./",
