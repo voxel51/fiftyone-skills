@@ -25,7 +25,8 @@ one file. Follow the steps in order; the import is not done until validation
    it changes, re-import.
 4. **STOP gate — packages:** never install a package without asking the user
    first (Step 5). Candidates: `pyarrow>=10.0.0` (import), `huggingface_hub`
-   (download), `lerobot` (v2→v3 conversion only).
+   (download), `lerobot` (v2→v3 conversion only), `pypcd4` (only if
+   `launch_app` raises `ModuleNotFoundError: pypcd4` — see Troubleshooting).
 5. **STOP gate — creation:** never create the dataset until the user confirms
    the plan (Step 6). End the plan with a question and WAIT.
 6. **Check name collisions** with `fo.list_datasets()` before creating. If it
@@ -59,8 +60,11 @@ LeRobot Import Progress:
 - Looks like `owner/name` or a `huggingface.co/datasets/...` URL → HF Hub,
   go to Step 2.
 - Local directory → skip to Step 3.
-- Cloud URI (`s3://`, `gs://`) → FiftyOne reads these directly; skip to
-  Step 3 and inspect with `fiftyone.core.storage` or the cloud CLI.
+- Cloud URI (`s3://`, `gs://`) → download or mount it to a local directory
+  first (e.g. `aws s3 sync`, `gsutil -m cp -r`, or a FUSE mount), then treat
+  it as a local directory for every remaining step. The rest of this
+  workflow (`meta/info.json` inspection, `from_dir(dataset_dir=...)`, and
+  the absolute-paths rule) assumes a local filesystem path throughout.
 
 ## Step 2: Download from Hugging Face Hub
 
@@ -153,7 +157,11 @@ Proceed with import? (yes/no)
 ```python
 import fiftyone as fo
 
-assert "<name>" not in fo.list_datasets()   # hard rule 6
+if "<name>" in fo.list_datasets():   # hard rule 6
+    raise ValueError(
+        "Dataset '<name>' already exists — ask the user to overwrite, "
+        "rename, or abort before proceeding."
+    )
 
 dataset = fo.Dataset.from_dir(
     dataset_dir="/abs/path/lerobot/<name>",
