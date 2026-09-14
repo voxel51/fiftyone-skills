@@ -1,13 +1,9 @@
----
-name: fiftyone-lerobot-import
-description: Imports LeRobot v3 robot-learning datasets into FiftyOne as multimodal episode datasets using fo.types.LeRobotDataset, including downloading from Hugging Face Hub, detecting and converting v2.x datasets to v3, adding multiple sources with add_dir, and validating episode counts. Use when the user mentions LeRobot, lerobot/ HF dataset repos, robot episodes, teleop recordings, observation.state/action data, or wants robot learning data in FiftyOne.
----
+# LeRobot Robot-Learning Dataset Import
 
-# LeRobot Dataset Import for FiftyOne
-
-Import a LeRobot v3 dataset into FiftyOne. One sample = one **episode**, not
-one file. Follow the steps in order; the import is not done until validation
-(Step 8) passes.
+Read this when the source is a LeRobot dataset (local directory with `meta/info.json`, or a
+Hugging Face Hub repo — typically under the `lerobot/` namespace, e.g.
+`lerobot/aloha_sim_insertion_human`). One sample = one **episode**, not one file. Follow the steps
+in order; the import is not done until validation (Step 8) passes.
 
 ## Key Directives
 
@@ -40,13 +36,13 @@ one file. Follow the steps in order; the import is not done until validation
    `dataset.info["lerobot"]["skipped_episodes"]`.
 10. **Keep error reports minimal** — one line on what failed and the fix.
 
-## Complete Workflow
+## Workflow
 
 ```
 LeRobot Import Progress:
 - [ ] Step 1: Identify the source (local path or HF repo id)
 - [ ] Step 2: Download from Hugging Face Hub (if needed)
-- [ ] Step 3: Inspect layout and detect version
+- [ ] Step 3: Inspect layout and detect codebase version
 - [ ] Step 4: Convert v2.x → v3 (if needed)
 - [ ] Step 5: Packages (STOP gate)
 - [ ] Step 6: Present plan, get confirmation (STOP gate)
@@ -55,7 +51,7 @@ LeRobot Import Progress:
 - [ ] Step 9: Launch the App
 ```
 
-## Step 1: Identify the source
+### Step 1: Identify the source
 
 - Looks like `owner/name` or a `huggingface.co/datasets/...` URL → HF Hub,
   go to Step 2.
@@ -66,7 +62,7 @@ LeRobot Import Progress:
   workflow (`meta/info.json` inspection, `from_dir(dataset_dir=...)`, and
   the absolute-paths rule) assumes a local filesystem path throughout.
 
-## Step 2: Download from Hugging Face Hub
+### Step 2: Download from Hugging Face Hub
 
 Hub repos tag format versions as revisions (`v2.1`, `v3.0`). Prefer the v3
 revision when it exists; fall back to `main` and let Step 3 decide.
@@ -83,7 +79,7 @@ still needs the full `meta/` directory plus whichever `data/` and `videos/`
 shards hold the selected episodes. Download everything unless the user
 explicitly accepts a partial import.
 
-## Step 3: Inspect layout and detect version
+### Step 3: Inspect layout and detect version
 
 ```bash
 cat /abs/path/lerobot/<name>/meta/info.json | python -c \
@@ -95,12 +91,12 @@ find /abs/path/lerobot/<name>/meta -maxdepth 2 | sort
 |-----------|---------|--------|
 | `codebase_version: v3.x`, `meta/episodes/chunk-*/file-*.parquet`, `meta/tasks.parquet`, `data/chunk-*/file-*.parquet` | v3 | Import (Step 5) |
 | `codebase_version: v2.x`, `meta/episodes.jsonl`, `meta/tasks.jsonl`, `data/chunk-*/episode_*.parquet` | v2.x | Convert (Step 4) |
-| No `meta/info.json` | not LeRobot | Stop; use `fiftyone-dataset-import` instead |
+| No `meta/info.json` | not LeRobot | Not this path — use the rest of [SKILL.md](SKILL.md) instead |
 
 Record for the plan: episode count, fps, robot_type, camera features
 (`dtype: video` or `image`), and `observation.state` / `action` shapes.
 
-## Step 4: Convert v2.x → v3
+### Step 4: Convert v2.x → v3
 
 Requires `lerobot` (STOP gate applies). The converter aggregates per-episode
 files into shards, migrates JSONL metadata to Parquet, and rewrites
@@ -117,7 +113,7 @@ Older `lerobot` releases expose it as
 `lerobot.scripts.convert_dataset_v21_to_v30`. After conversion, repeat
 Step 3 and confirm `codebase_version` is `v3.x` before continuing.
 
-## Step 5: Packages (STOP gate)
+### Step 5: Packages (STOP gate)
 
 ```bash
 pip show pyarrow          # import; needs >=10.0.0
@@ -129,7 +125,7 @@ If anything is missing, STOP and ask before installing. Note: launching the
 App also needs `pypcd4` on current FiftyOne dev builds
 (`fiftyone.utils.utils3d` imports it at server start).
 
-## Step 6: Present plan, get confirmation (STOP gate)
+### Step 6: Present plan, get confirmation (STOP gate)
 
 ```
 LeRobot Import Plan for /abs/path/lerobot/<name>:
@@ -152,7 +148,7 @@ Proceed with import? (yes/no)
 
 **WAIT for the answer.**
 
-## Step 7: Name check, import
+### Step 7: Name check, import
 
 ```python
 import fiftyone as fo
@@ -184,7 +180,7 @@ dataset = fo.Dataset.from_dir(
 Import reads only `meta/info.json` and `meta/episodes/*.parquet`; no data
 shard or video is opened, so it is fast even for large sources.
 
-## Step 8: Validate
+### Step 8: Validate
 
 ```python
 import json
@@ -207,7 +203,7 @@ Expected sample fields: `media_reference`, `episode_index`, `task`, `tasks`,
 non-empty, report the numbers and the skipped-episode reasons — do not
 declare success.
 
-## Step 9: Launch the App
+### Step 9: Launch the App
 
 ```python
 session = fo.launch_app(dataset)

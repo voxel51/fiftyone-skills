@@ -41,7 +41,7 @@ Skills for working with datasets and models:
 
 | Skill | Command | Use When |
 |-------|---------|----------|
-| **Dataset Import** | `/fiftyone:fiftyone-dataset-import` | Importing any dataset (COCO, YOLO, VOC, videos, point clouds, multimodal, Hugging Face Hub) |
+| **Dataset Import** | `/fiftyone:fiftyone-dataset-import` | Importing any dataset (COCO, YOLO, VOC, videos, point clouds, multimodal, MCAP, LeRobot, Hugging Face Hub) |
 | **Dataset Export** | `/fiftyone:fiftyone-dataset-export` | Exporting datasets to standard formats or Hugging Face Hub for training or sharing |
 | **Find Duplicates** | `/fiftyone:fiftyone-find-duplicates` | Removing duplicate or near-duplicate images from datasets |
 | **Dataset Inference** | `/fiftyone:fiftyone-dataset-inference` | Running detection, classification, segmentation, or embeddings on data |

@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-import
-description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, or creating grouped datasets.
+description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds, MCAP multimodal recordings), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, LeRobot v3 robot-learning episode datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, importing robotics/AV sensor logs (MCAP, ROS bag), importing LeRobot robot-learning episodes (teleop recordings, observation.state/action data), or creating grouped datasets.
 ---
 
 # Universal Dataset Import for FiftyOne
@@ -27,82 +27,20 @@ Look for patterns that indicate grouped data:
 - Mixed media types that should be grouped (images + point clouds)
 
 ### 4. Detect and install required packages
-Many specialized dataset formats require external Python packages. After detecting the format:
+Named autonomous-driving devkit formats (PandaSet, nuScenes, Waymo Open, Argoverse, KITTI 3D,
+Lyft L5, A2D2) need an external Python package. Check with `pip show <package>`, ask the user
+before installing, then verify with a smoke-test import. Full package table, directory-pattern
+detection, and the complete conversion workflow are in
+[SPECIALIZED-3D-FORMATS.md](SPECIALIZED-3D-FORMATS.md).
 
-1. **Identify required packages** based on the detected format
-2. **Check if packages are installed** using `pip show <package>`
-3. **Search for installation instructions** if needed (use web search or FiftyOne docs)
-4. **Ask user for permission** before installing any packages
-5. **Install required packages** (see installation methods below)
-6. **Verify installation** before proceeding
+**No package is required to import or render MCAP (`.mcap`/`.bag`/`.rrd`) files.** The file
+extension alone sets `media_type == "multimodal"`, and channel decoding and rendering happen
+client-side in the FiftyOne App. Do not tell users to `pip install mcap` for this. The only
+optional use for a Python-side package is reading channel schemas before opening the App, covered
+in Step 9D below.
 
-**Common format-to-package mappings:**
-
-| Dataset Format | Package Name | Install Command |
-|---------------|--------------|-----------------|
-| PandaSet | `pandaset` | `pip install "git+https://github.com/scaleapi/pandaset-devkit.git#subdirectory=python"` |
-| nuScenes | `nuscenes-devkit` | `pip install nuscenes-devkit` |
-| Waymo Open | `waymo-open-dataset-tf` | See Waymo docs (requires TensorFlow) |
-| Argoverse 2 | `av2` | `pip install av2` |
-| KITTI 3D | `pykitti` | `pip install pykitti` |
-| Lyft L5 | `l5kit` | `pip install l5kit` |
-| A2D2 | `a2d2` | See Audi A2D2 docs |
-
-**Additional packages for 3D processing:**
-
-| Purpose | Package Name | Install Command |
-|---------|--------------|-----------------|
-| Point cloud conversion to PCD | `open3d` | `pip install open3d` |
-| Point cloud processing | `pyntcloud` | `pip install pyntcloud` |
-| LAS/LAZ point clouds | `laspy` | `pip install laspy` |
-
-**Additional packages for Hugging Face Hub:**
-
-| Purpose | Package Name | Install Command |
-|---------|--------------|-----------------|
-| HF Hub API | `huggingface_hub` | `pip install huggingface_hub` |
-| Parquet file reading | `pyarrow` | `pip install pyarrow` |
-| Image processing | `Pillow` | `pip install Pillow` |
-
-**Installation methods (in order of preference):**
-
-1. **PyPI** - Standard pip install:
-   ```bash
-   pip install <package-name>
-   ```
-
-2. **GitHub URL** - When package is not on PyPI:
-   ```bash
-   # Standard GitHub install
-   pip install "git+https://github.com/<org>/<repo>.git"
-
-   # With subdirectory (for monorepos)
-   pip install "git+https://github.com/<org>/<repo>.git#subdirectory=python"
-
-   # Specific branch or tag
-   pip install "git+https://github.com/<org>/<repo>.git@v1.0.0"
-   ```
-
-3. **Clone and install** - For complex builds:
-   ```bash
-   git clone https://github.com/<org>/<repo>.git
-   cd <repo>
-   pip install .
-   ```
-
-**Dynamic package discovery workflow:**
-
-If the format is not in the table above:
-1. **Search PyPI** for `<format-name>`, `<format-name>-devkit`, or `<format-name>-sdk`
-2. **Search GitHub** for `<format-name> devkit` or `<format-name> python`
-3. **Search web** for "FiftyOne import <format-name>" or "<format-name> python tutorial"
-4. **Check the dataset's official website** for developer tools/SDK
-5. **Present findings to user** with installation options
-
-**After installation:**
-1. **Verify** the package is installed: `pip show <package-name>`
-2. **Test import** in Python: `python -c "from <package> import ..."`
-3. **Search for FiftyOne integration** examples or write custom import code
+**Additional packages for 3D processing:** `open3d` (PCD conversion), `pyntcloud`, `laspy`
+(LAS/LAZ). **For Hugging Face Hub:** `huggingface_hub`, `pyarrow`, `Pillow`.
 
 ### 5. Confirm before importing
 Present findings to user and **explicitly ask for confirmation** before creating the dataset.
@@ -137,6 +75,21 @@ Compare imported sample count with source file count. Report any discrepancies.
 Keep error messages simple for the user. Use detailed error info internally to diagnose issues.
 
 ## Complete Workflow
+
+**Before scanning, identify what kind of source this is** — most sources are local directories
+and follow Steps 1-12 below, but two formats are detected up front instead of by scanning loose
+files:
+
+- A `lerobot/...` Hugging Face Hub repo id, or a local directory with `meta/info.json` at its
+  root → LeRobot. Skip straight to [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) and
+  [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md); do not run Step 1's folder scan on a bare repo id first
+  since there is nothing local to scan until it's downloaded.
+- Any other Hugging Face Hub repo id (`owner/name`) or `huggingface.co/datasets/...` URL → see
+  [Importing from Hugging Face Hub](#importing-from-hugging-face-hub) below.
+- A local directory of `.mcap`/`.bag`/`.rrd` files → Steps 1-8 apply for the scan/confirm/create
+  steps, then jump to [Step 9D](#step-9d-import-multimodal-mcap-recordings) for the import itself.
+- Everything else (a local path to images, videos, point clouds, or an existing label format) →
+  continue with Step 1.
 
 ### Step 1: Deep Folder Scan
 
@@ -181,6 +134,19 @@ Classify files by extension:
 | `.mp4`, `.avi`, `.mov`, `.mkv`, `.webm` | Video | `video` |
 | `.pcd`, `.ply`, `.las`, `.laz` | Point Cloud | `point-cloud` |
 | `.fo3d`, `.obj`, `.gltf`, `.glb` | 3D Scene | `3d` |
+| `.mcap`, `.bag`, `.rrd` | Multimodal (robotics/AV sensor log) | `multimodal` |
+
+**MCAP recordings are a special case.** A single `.mcap` file is one self-contained multimodal
+episode that can hold many time-synchronized streams internally (camera images, LIDAR, IMU, GPS,
+transforms, diagnostics), each as its own channel/topic. There is no separate MCAP dataset type and
+no labels file to import: one `.mcap` file is one sample. See
+[Step 9D](#step-9d-import-multimodal-mcap-recordings) below.
+
+**LeRobot datasets are also a special case.** A LeRobot source is a directory (or `lerobot/...`
+Hugging Face Hub repo) with `meta/info.json` at its root, not a pile of loose media files — do not
+scan it file-by-file like the patterns above. One sample = one **episode**, built with
+`fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`, never `add_samples`. See
+[Step 9E](#step-9e-import-lerobot-robot-learning-datasets) below.
 
 ### Step 3: Detect Label Format
 
@@ -200,79 +166,24 @@ Identify label format from file patterns:
 | `*.json` with GeoJSON structure | GeoJSON | `GeoJSON` |
 | `.dcm` DICOM files | DICOM | `DICOM` |
 | `.tiff` with geo metadata | GeoTIFF | `GeoTIFF` |
+| `meta/info.json` + `meta/episodes/*.parquet` at the source root (or a `lerobot/...` HF repo) | LeRobot | `LeRobotDataset` |
 
-**Specialized Autonomous Driving Formats (require external packages):**
+**LeRobot robot-learning datasets** are directory-based, not file-based: detect them by the
+presence of `meta/info.json` at the source root (or an HF repo id under the `lerobot/` namespace)
+before falling back to any of the patterns above. There is no labels file to import separately —
+episodes, tasks, and `observation.state`/`action` data all come from the LeRobot importer. See
+[Step 9E](#step-9e-import-lerobot-robot-learning-datasets).
 
-| Directory Pattern | Format | Required Package |
-|------------------|--------|------------------|
-| `camera/`, `lidar/`, `annotations/cuboids/` with `.pkl.gz` | PandaSet | `pandaset-devkit` |
-| `samples/`, `sweeps/`, `v1.0-*` folders | nuScenes | `nuscenes-devkit` |
-| `segment-*` with `.tfrecord` files | Waymo Open | `waymo-open-dataset-tf` |
-| `argoverse-tracking/` structure | Argoverse | `argoverse-api` |
-| `training/`, `testing/` with `calib/`, `velodyne/` | KITTI 3D | `pykitti` |
-| `scenes/`, `aerial_map/` | Lyft L5 | `l5kit` |
+**Specialized autonomous driving formats** (PandaSet, nuScenes, Waymo Open, Argoverse, KITTI 3D,
+Lyft L5, A2D2) need an external devkit and a conversion step. See
+[SPECIALIZED-3D-FORMATS.md](SPECIALIZED-3D-FORMATS.md) for directory-pattern detection, the
+package table, and the complete conversion workflow.
 
 ### Step 4: Detect Required Packages
 
-After identifying the format, check if external packages are needed:
-
-```bash
-# Check if package is installed (use the actual package name, not repo name)
-pip show pandaset
-
-# If not found, the package needs to be installed
-```
-
-**If packages are required:**
-
-1. **Inform user** what packages are needed and why
-
-2. **Search for installation method** if not in the common mappings table:
-   - Search PyPI first: `pip search <package>` or check pypi.org
-   - Search GitHub for the devkit/SDK repository
-   - Check the dataset's official documentation
-   - Search web: "<dataset-name> python install"
-
-3. **Ask for permission** to install:
-   ```
-   This dataset appears to be in PandaSet format, which requires the `pandaset` package.
-
-   The package is not on PyPI and must be installed from GitHub:
-   pip install "git+https://github.com/scaleapi/pandaset-devkit.git#subdirectory=python"
-
-   Would you like me to:
-   - Install the package (recommended)
-   - Search for alternative import methods
-   - Abort and let you install manually
-   ```
-
-4. **Install using the appropriate method**:
-   ```bash
-   # PyPI (if available)
-   pip install <package-name>
-
-   # GitHub URL (if not on PyPI)
-   pip install "git+https://github.com/<org>/<repo>.git#subdirectory=python"
-
-   # Clone and install (for complex builds)
-   git clone https://github.com/<org>/<repo>.git && cd <repo> && pip install .
-   ```
-
-5. **Verify installation**:
-   ```bash
-   pip show <package-name>
-   ```
-
-6. **Test the import** in Python:
-   ```bash
-   python -c "from <package> import <main_class>; print('OK')"
-   ```
-
-7. **Search for FiftyOne integration code**:
-   - Search: "FiftyOne <format-name> import example"
-   - Search: "<format-name> to FiftyOne grouped dataset"
-   - Check FiftyOne docs for similar dataset types
-   - If no examples exist, build custom import code using the devkit API
+Check whether the detected format's package is already installed (`pip show <package>`), inform
+the user what's needed and why, ask permission before installing, then verify with a smoke-test
+import. Full detail in [SPECIALIZED-3D-FORMATS.md](SPECIALIZED-3D-FORMATS.md).
 
 ### Step 5: Detect Grouping Pattern
 
@@ -311,6 +222,18 @@ Detection: Common prefix = group ID, suffix = slice name
 ├── image_003.jpg
 ```
 Detection: Single media type, no clear grouping pattern
+
+**Pattern D: MCAP Multimodal Recordings (No Grouping Needed)**
+```
+/data/
+├── episode-0001.mcap
+├── episode-0002.mcap
+├── episode-0003.mcap
+```
+Detection: Each `.mcap`/`.bag`/`.rrd` file is already a self-contained multimodal recording
+(cameras, LIDAR, IMU, GPS, etc. are internal channels within the file). Do **not** try to group
+these with other files — import each recording as a single sample. See
+[Step 9D](#step-9d-import-multimodal-mcap-recordings).
 
 ### Step 6: Present Findings to User
 
@@ -485,219 +408,167 @@ print(f"Added {len(dataset)} samples in {len(dataset.distinct('group.id'))} grou
 
 ### Step 9C: Import Specialized Format Dataset (3D/Autonomous Driving)
 
-For datasets requiring external packages (PandaSet, nuScenes, etc.), use the devkit to load data and convert to FiftyOne format.
+For datasets requiring an external devkit (PandaSet, nuScenes, Waymo, Argoverse, KITTI 3D, Lyft
+L5, A2D2), use the devkit to load the raw data, convert point clouds to PCD, build `fo.Scene`
+objects for 3D visualization, and import every detected label type (cuboids, segmentation,
+tracking). The full workflow, PCD conversion code, label-type mapping, and a complete worked
+PandaSet example are in [SPECIALIZED-3D-FORMATS.md](SPECIALIZED-3D-FORMATS.md).
 
-**General approach:**
-1. Search FiftyOne documentation or web for the specific import method
-2. Use the devkit to load the raw data
-3. **Convert point clouds to PCD format** (FiftyOne requires `.pcd` files)
-4. **Create `fo.Scene` objects** for 3D visualization with point clouds
-5. Convert to FiftyOne samples with proper grouping
-6. **Import ALL detected labels** (cuboids, segmentation, etc.) found during scan
+### Step 9D: Import Multimodal (MCAP) Recordings
 
-#### Converting Point Clouds to PCD
+MCAP is the container format FiftyOne uses for time-synchronized robotics and autonomous vehicle
+sensor logs (camera images, LIDAR/point clouds, IMU, GPS, coordinate frame transforms,
+diagnostics, and more, all as channels/topics inside one file). Unlike the specialized 3D formats
+above, **no devkit, no label conversion, and no extra Python package are required on the import
+side** — the sample's `filepath` extension alone is enough for FiftyOne to classify it as
+`media_type == "multimodal"`; decoding channel schemas (ROS 1/2, Foxglove, JSON) and rendering the
+tiled viewer happens entirely client-side in the App when the sample is opened.
 
-Many autonomous driving datasets store LiDAR data in proprietary formats (`.pkl.gz`, `.bin`, `.npy`). Convert to PCD for FiftyOne:
+**This section covers the common case: you already have working `.mcap` files and just need them
+in a dataset.** For anything deeper, three linked reference files carry the rest. Read the one that
+matches what's actually happening:
 
-```python
-import numpy as np
-import open3d as o3d
-from pathlib import Path
+| Situation | Read |
+|---|---|
+| A tile isn't rendering, or the App "looks broken" | [MCAP-TROUBLESHOOTING.md](MCAP-TROUBLESHOOTING.md). Check its symptom table before assuming a bug: the viewer fails silently by design when a schema isn't decodable, so most reports of "the import isn't working" turn out not to be import bugs at all |
+| Authoring `.mcap` from raw sensor data (ROS bags, Zarr, HDF5, PCD, CSV, image folders) with `foxglove-sdk`, or converting/merging/splitting/patching existing MCAP files | [MCAP-AUTHORING.md](MCAP-AUTHORING.md) |
+| Building the FiftyOne dataset from finished episodes, or about to declare an import done | [MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md) |
 
-def convert_to_pcd(points, output_path):
-    """
-    Convert point cloud array to PCD file.
-
-    Args:
-        points: numpy array of shape (N, 3) or (N, 4) with XYZ or XYZI
-        output_path: path to save .pcd file
-    """
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-
-    # If intensity is available, store as colors (grayscale)
-    if points.shape[1] >= 4:
-        intensity = points[:, 3]
-        intensity_normalized = (intensity - intensity.min()) / (intensity.max() - intensity.min() + 1e-8)
-        colors = np.stack([intensity_normalized] * 3, axis=1)
-        pcd.colors = o3d.utility.Vector3dVector(colors)
-
-    o3d.io.write_point_cloud(str(output_path), pcd)
-    return output_path
-```
-
-**Note:** Install open3d if needed: `pip install open3d`
-
-#### Creating fo.Scene for 3D Visualization
-
-For each LiDAR frame, create an `fo.Scene` that references the PCD file:
+**1. Import.** Each `.mcap` file becomes exactly one sample. No package install step is needed.
+Use the same `MEDIA_ONLY` + glob pattern approach as Use Case 3 (point clouds):
 
 ```python
-import fiftyone as fo
-
-# Create a 3D scene for the point cloud
-scene = fo.Scene()
-
-# Add point cloud to the scene
-scene.add_point_cloud(
-    name="lidar",
-    pcd_path="/path/to/frame.pcd",
-    flag_for_projection=True  # Enable projection to camera views
+execute_operator(
+    operator_uri="@voxel51/utils/create_dataset",
+    params={"name": "robot-teleop-episodes", "persistent": true}
 )
 
-# Create sample with the scene
-sample = fo.Sample(filepath="/path/to/scene.fo3d")  # Or use scene directly
-sample["scene"] = scene
+set_context(dataset_name="robot-teleop-episodes")
+
+execute_operator(
+    operator_uri="@voxel51/io/import_samples",
+    params={
+        "import_type": "MEDIA_ONLY",
+        "style": "GLOB_PATTERN",
+        "glob_patt": {"absolute_path": "/path/to/recordings/*.mcap"}
+    }
+)
 ```
 
-#### Importing ALL Labels Detected During Scan
-
-During the folder scan (Step 1), identify ALL label types present:
-
-```bash
-# Example: List all annotation directories/files
-ls -la /path/to/dataset/annotations/
-# Output might show: cuboids/, semseg/, tracking/, instances.json, etc.
-```
-
-**Map detected labels to FiftyOne label types:**
-
-| Annotation Type | FiftyOne Label Type | Field Name |
-|-----------------|---------------------|------------|
-| 3D Cuboids/Bounding Boxes | `fo.Detection` with 3D attributes | `detections_3d` |
-| Semantic Segmentation | `fo.Segmentation` | `segmentation` |
-| Instance Segmentation | `fo.Detections` with masks | `instances` |
-| Tracking IDs | Add `track_id` to detections | `tracks` |
-| Classification | `fo.Classification` | `classification` |
-| Keypoints/Pose | `fo.Keypoints` | `keypoints` |
-
-**Example: PandaSet Full Import with Labels**
+Or directly in Python, for more control (e.g. tagging episodes by source, adding custom metadata
+fields extracted from the filename):
 
 ```python
 import fiftyone as fo
-import numpy as np
-import open3d as o3d
 from pathlib import Path
-import gzip
-import pickle
 
-data_path = Path("/path/to/pandaset")
-pcd_output_dir = data_path / "pcd_converted"
-pcd_output_dir.mkdir(exist_ok=True)
+dataset = fo.Dataset("robot-teleop-episodes", persistent=True)
 
-# Create dataset with groups
-dataset = fo.Dataset("pandaset", persistent=True)
-dataset.add_group_field("group", default="front_camera")
+recordings_dir = Path("/path/to/recordings")
+samples = [
+    fo.Sample(filepath=str(mcap_file))
+    for mcap_file in sorted(recordings_dir.glob("*.mcap"))
+]
 
-# Get camera names
-camera_names = [d.name for d in (data_path / "camera").iterdir() if d.is_dir()]
-frame_count = len(list((data_path / "camera" / "front_camera").glob("*.jpg")))
-
-# Check what labels exist
-labels_dir = data_path / "annotations"
-available_labels = [d.name for d in labels_dir.iterdir() if d.is_dir()]
-print(f"Found label types: {available_labels}")  # e.g., ['cuboids', 'semseg']
-
-samples = []
-for frame_idx in range(frame_count):
-    frame_id = f"{frame_idx:02d}"
-    group = fo.Group()
-
-    # === Add camera images ===
-    for cam_name in camera_names:
-        img_path = data_path / "camera" / cam_name / f"{frame_id}.jpg"
-        if img_path.exists():
-            sample = fo.Sample(filepath=str(img_path))
-            sample["group"] = group.element(cam_name)
-            sample["frame_idx"] = frame_idx
-            samples.append(sample)
-
-    # === Convert and add LiDAR point cloud ===
-    lidar_pkl = data_path / "lidar" / f"{frame_id}.pkl.gz"
-    if lidar_pkl.exists():
-        # Load pickle
-        with gzip.open(lidar_pkl, 'rb') as f:
-            lidar_data = pickle.load(f)
-
-        # Extract points (adjust based on actual data structure)
-        if isinstance(lidar_data, dict):
-            points = lidar_data.get('points', lidar_data.get('data'))
-        else:
-            points = np.array(lidar_data)
-
-        # Convert to PCD
-        pcd_path = pcd_output_dir / f"{frame_id}.pcd"
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-        o3d.io.write_point_cloud(str(pcd_path), pcd)
-
-        # Create 3D sample with scene
-        lidar_sample = fo.Sample(filepath=str(pcd_path))
-        lidar_sample["group"] = group.element("lidar")
-        lidar_sample["frame_idx"] = frame_idx
-
-        # === Load 3D cuboid labels if available ===
-        # IMPORTANT: Store 3D attributes as flat scalar fields, NOT lists
-        # Using lists (e.g., location=[x,y,z]) causes "Symbol.iterator" errors in 3D viewer
-        if "cuboids" in available_labels:
-            cuboids_pkl = labels_dir / "cuboids" / f"{frame_id}.pkl.gz"
-            if cuboids_pkl.exists():
-                with gzip.open(cuboids_pkl, 'rb') as f:
-                    cuboids_df = pickle.load(f)  # PandaSet uses pandas DataFrame
-
-                detections = []
-                for _, row in cuboids_df.iterrows():
-                    detection = fo.Detection(
-                        label=row.get("label", "object"),
-                        bounding_box=[0, 0, 0.01, 0.01],  # minimal 2D placeholder
-                    )
-                    # Store 3D attributes as FLAT SCALAR fields (not lists!)
-                    detection["pos_x"] = float(row.get("position.x", 0))
-                    detection["pos_y"] = float(row.get("position.y", 0))
-                    detection["pos_z"] = float(row.get("position.z", 0))
-                    detection["dim_x"] = float(row.get("dimensions.x", 1))
-                    detection["dim_y"] = float(row.get("dimensions.y", 1))
-                    detection["dim_z"] = float(row.get("dimensions.z", 1))
-                    detection["yaw"] = float(row.get("yaw", 0))
-                    detection["track_id"] = str(row.get("uuid", ""))
-                    detection["stationary"] = bool(row.get("stationary", False))
-                    detections.append(detection)
-
-                lidar_sample["ground_truth"] = fo.Detections(detections=detections)
-
-        # === Load semantic segmentation if available ===
-        if "semseg" in available_labels:
-            semseg_pkl = labels_dir / "semseg" / f"{frame_id}.pkl.gz"
-            if semseg_pkl.exists():
-                with gzip.open(semseg_pkl, 'rb') as f:
-                    semseg_data = pickle.load(f)
-                # Store as custom field (point-wise labels)
-                lidar_sample["point_labels"] = semseg_data.tolist() if hasattr(semseg_data, 'tolist') else semseg_data
-
-        samples.append(lidar_sample)
-
-# Add all samples
 dataset.add_samples(samples)
-dataset.save()
 
-print(f"Imported {len(dataset)} groups with {len(dataset.select_group_slices())} total samples")
-print(f"Slices: {dataset.group_slices}")
-print(f"Labels imported: {available_labels}")
+print(dataset.media_type)  # "multimodal"
 ```
 
-**Dynamic Import Discovery:**
-If no example exists for the format:
-1. Search: "FiftyOne <format-name> import example"
-2. Search: "<format-name> devkit python example"
-3. Read the devkit documentation to understand data structure
-4. Explore the annotation files to understand label format:
-   ```python
-   import pickle, gzip
-   with gzip.open("annotations/cuboids/00.pkl.gz", "rb") as f:
-       data = pickle.load(f)
-   print(type(data), data[0] if isinstance(data, list) else data)
-   ```
-5. Build custom import code based on the devkit API and label structure
+**2. Do not group MCAP samples with other slices.** Each `.mcap` file already carries all of its
+sensor streams internally. Adding it as one slice in a `fo.Group()` alongside separately exported
+camera or LiDAR files would duplicate data that's already inside the recording.
+
+**2b. Detect capabilities by schema, not by topic name, and store them as fields.** A topic's name
+is not a reliable signal for what it renders as. A topic named `/livox/lidar` or
+`/os_node/imu_packets` looks like LiDAR or IMU data, but if its actual message schema is a
+vendor-specific format (Livox's `livox_ros_driver/msg/CustomMsg`, or Ouster's raw
+`ouster_ros/msg/PacketMsg`), FiftyOne has no built-in decoder for it. It will never render in the
+3D or Plot tile no matter how the topic is named, and always falls back to the raw Message tile.
+Only a fixed set of schemas render in each tile type. See
+[MCAP-TROUBLESHOOTING.md's schema-to-tile table](MCAP-TROUBLESHOOTING.md#schema-to-tile-reference)
+for the full list; a custom or proprietary LiDAR message is not on it and is expected to stay in
+the Message tile.
+
+Check real schemas from the file with the lightweight `mcap` package (`pip install mcap`, a small
+pure-Python reader unrelated to any ROS install) and store the result as boolean fields
+(`has_pointcloud`, `has_image`, `has_gps`, `has_imu`, and so on) so users and agents can query
+capability across many recordings without opening each one in the App. Use the full
+`mcap_stats()`/`build_sample()` helper in
+[MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md#capability-flags-from-schemas-not-topic-names)
+rather than reimplementing a narrower version. It also captures `duration_s`, `message_count`,
+`topics`, and `schemas` needed for validation in the same pass, and answers "will this file show a
+point cloud" with `dataset.match(F("has_pointcloud"))` instead of opening every sample to find out.
+
+**3. Validate.** Confirm `dataset.media_type == "multimodal"` and that the sample count matches the
+number of recording files found during the scan. Individual channels, topics, annotations, and time
+tracks are inspected in the App's multimodal viewer, not via the Python import step. For anything
+beyond a handful of files, also run the cheap `validate_mcap()` structural check in
+[MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md#a-written-file-is-not-a-good-file).
+A file can pass every count-based check here while being silently corrupted in a way that only
+surfaces when a sample is actually opened.
+
+**4. Launch the App** to explore streams. FiftyOne opens multimodal samples in a tiled viewer
+(image, 3D, map, plot, message, and log tiles) with a shared playback clock:
+
+```python
+launch_app(dataset_name="robot-teleop-episodes")
+```
+
+**Note on "no data" at the start of playback:** the Message, Plot, 3D, and Map tiles all show the
+most recent message as of the current playhead. If a topic's first message doesn't start at `t=0`
+(common, since sensors have startup lag), a tile bound to it will legitimately show nothing, for
+example "No message at or before the playhead on this topic," until playback is scrubbed or played
+past that topic's first timestamp. This is expected behavior, not a broken import. Verify by
+pressing play or scrubbing forward before concluding a tile is broken. If a tile still looks wrong
+after that, check [MCAP-TROUBLESHOOTING.md](MCAP-TROUBLESHOOTING.md)'s symptom table before
+assuming the import failed.
+
+**Note:** temporal tags (tags on a time interval within a recording, added with
+`dataset.temporal_tags.add(...)`) work locally with no Enterprise requirement. See
+[MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md#temporal-tags) for the pattern.
+MCAP indexing, which projects channels into queryable Parquet tables for cross-recording search, is
+an Enterprise-only feature and out of scope for a local import. See the
+[FiftyOne Multimodal guide](https://docs.voxel51.com/user_guide/multimodal.html) if a user asks
+about it.
+
+### Step 9E: Import LeRobot Robot-Learning Datasets
+
+LeRobot is a directory-based robot-learning dataset format (local, or downloaded from a
+Hugging Face Hub `lerobot/...` repo, e.g. `lerobot/aloha_sim_insertion_human`). One sample = one
+**episode**, not one file, and `fo.types.LeRobotDataset` only supports the v3 layout.
+
+**Full workflow, STOP gates, and troubleshooting are in
+[LEROBOT-IMPORT.md](LEROBOT-IMPORT.md) — read it before importing a LeRobot source.** Summary:
+
+1. Identify the source (local path or HF repo id) and download it if it's on the Hub.
+2. Inspect `meta/info.json` and detect `codebase_version`; convert v2.x → v3 with `lerobot`'s
+   converter if needed (`fo.types.LeRobotDataset` raises `UnsupportedLeRobotVersionError` on v2.x).
+3. **STOP gate:** confirm required packages (`pyarrow>=10.0.0`, `huggingface_hub`, `lerobot`) before
+   installing anything.
+4. **STOP gate:** present the import plan (episode count, fps, robot_type, camera/state/action
+   shapes) and wait for confirmation before creating the dataset.
+5. Check name collisions with `fo.list_datasets()`, then import:
+
+```python
+import fiftyone as fo
+
+dataset = fo.Dataset.from_dir(
+    dataset_dir="/abs/path/lerobot/<name>",
+    dataset_type=fo.types.LeRobotDataset,
+    name="<name>",
+    persistent=True,
+)
+```
+
+6. Validate imported episode count against `meta/info.json`'s `total_episodes` and report
+   `dataset.info["lerobot"]["skipped_episodes"]` — do not declare success if either mismatches.
+7. Launch the App: episodes render with per-camera Image tiles, a **State & Action** tile, Plot
+   tiles for state/action dimensions, and a **Streams** tab.
+
+Use `add_samples` for nothing here — it cannot introduce a LeRobot source. Use
+`dataset.add_dir(..., dataset_type=fo.types.LeRobotDataset)` to add further LeRobot sources to an
+existing dataset.
 
 ### Step 10: Import Additional Labels (Optional)
 
@@ -750,6 +621,7 @@ launch_app(dataset_name="my-dataset")
 | `video` | `.mp4`, `.avi`, `.mov`, `.mkv`, `.webm` | Video files with frames |
 | `point-cloud` | `.pcd`, `.ply`, `.las`, `.laz` | 3D point cloud data |
 | `3d` | `.fo3d`, `.obj`, `.gltf`, `.glb` | 3D scenes and meshes |
+| `multimodal` | `.mcap`, `.bag`, `.rrd` | Time-synchronized robotics/AV sensor recordings (MCAP container format) |
 
 ### Label Formats
 
@@ -774,205 +646,12 @@ launch_app(dataset_name="my-dataset")
 | GeoJSON | `GeoJSON` | geolocation | `*.json` |
 | GeoTIFF | `GeoTIFF` | geolocation | `.tiff` with geo |
 | FiftyOne Dataset | `FiftyOne Dataset` | all types | Exported format |
+| LeRobot | `LeRobotDataset` | episode metadata (task, state, action, duration) | `meta/info.json` + `meta/episodes/*.parquet` |
 
 ## Common Use Cases
 
-### Use Case 1: Simple Image Dataset with COCO Labels
-
-```python
-# Scan directory
-# Found: 5000 images, annotations.json (COCO format)
-
-execute_operator(
-    operator_uri="@voxel51/utils/create_dataset",
-    params={"name": "coco-dataset", "persistent": true}
-)
-
-set_context(dataset_name="coco-dataset")
-
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_AND_LABELS",
-        "dataset_type": "COCO",
-        "data_path": {"absolute_path": "/path/to/images"},
-        "labels_path": {"absolute_path": "/path/to/annotations.json"},
-        "label_field": "ground_truth"
-    }
-)
-
-launch_app(dataset_name="coco-dataset")
-```
-
-### Use Case 2: YOLO Dataset
-
-```python
-# Scan directory
-# Found: data.yaml, images/, labels/ (YOLOv5 format)
-
-execute_operator(
-    operator_uri="@voxel51/utils/create_dataset",
-    params={"name": "yolo-dataset", "persistent": true}
-)
-
-set_context(dataset_name="yolo-dataset")
-
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_AND_LABELS",
-        "dataset_type": "YOLOv5",
-        "dataset_dir": {"absolute_path": "/path/to/yolo/dataset"},
-        "label_field": "ground_truth"
-    }
-)
-
-launch_app(dataset_name="yolo-dataset")
-```
-
-### Use Case 3: Point Cloud Dataset
-
-```python
-# Scan directory
-# Found: 1000 .pcd files, labels/ with KITTI format
-
-execute_operator(
-    operator_uri="@voxel51/utils/create_dataset",
-    params={"name": "lidar-dataset", "persistent": true}
-)
-
-set_context(dataset_name="lidar-dataset")
-
-# Import point clouds
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_ONLY",
-        "style": "GLOB_PATTERN",
-        "glob_patt": {"absolute_path": "/path/to/data/*.pcd"}
-    }
-)
-
-launch_app(dataset_name="lidar-dataset")
-```
-
-### Use Case 4: Autonomous Driving (Multimodal Groups)
-
-This is the most complex case - multiple cameras + LiDAR per scene:
-
-```python
-import fiftyone as fo
-from pathlib import Path
-
-# Create dataset with group support
-dataset = fo.Dataset("driving-dataset", persistent=True)
-dataset.add_group_field("group", default="front_camera")
-
-data_dir = Path("/path/to/driving_data")
-samples = []
-
-# Process each scene folder
-for scene_dir in sorted(data_dir.iterdir()):
-    if not scene_dir.is_dir():
-        continue
-
-    group = fo.Group()
-
-    # Map files to slices
-    slice_mapping = {
-        "front": "front_camera",
-        "left": "left_camera",
-        "right": "right_camera",
-        "rear": "rear_camera",
-        "lidar": "lidar",
-        "radar": "radar"
-    }
-
-    for file in scene_dir.iterdir():
-        # Determine slice from filename
-        for key, slice_name in slice_mapping.items():
-            if key in file.stem.lower():
-                samples.append(fo.Sample(
-                    filepath=str(file),
-                    group=group.element(slice_name)
-                ))
-                break
-
-dataset.add_samples(samples)
-dataset.save()
-
-print(f"Created {len(dataset.distinct('group.id'))} groups")
-print(f"Slices: {dataset.group_slices}")
-print(f"Media types: {dataset.group_media_types}")
-
-# Launch app
-session = fo.launch_app(dataset)
-```
-
-### Use Case 5: Classification Directory Tree
-
-```python
-# Scan directory
-# Found: cats/, dogs/, birds/ folders with images inside
-
-execute_operator(
-    operator_uri="@voxel51/utils/create_dataset",
-    params={"name": "classification-dataset", "persistent": true}
-)
-
-set_context(dataset_name="classification-dataset")
-
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_AND_LABELS",
-        "dataset_type": "Image Classification Directory Tree",
-        "dataset_dir": {"absolute_path": "/path/to/classification"},
-        "label_field": "ground_truth"
-    }
-)
-
-launch_app(dataset_name="classification-dataset")
-```
-
-### Use Case 6: Mixed Media (Images + Videos)
-
-```python
-# Scan directory
-# Found: images/, videos/ folders
-
-# Create dataset
-execute_operator(
-    operator_uri="@voxel51/utils/create_dataset",
-    params={"name": "mixed-media", "persistent": true}
-)
-
-set_context(dataset_name="mixed-media")
-
-# Import images
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_ONLY",
-        "style": "DIRECTORY",
-        "directory": {"absolute_path": "/path/to/images"},
-        "tags": ["image"]
-    }
-)
-
-# Import videos
-execute_operator(
-    operator_uri="@voxel51/io/import_samples",
-    params={
-        "import_type": "MEDIA_ONLY",
-        "style": "DIRECTORY",
-        "directory": {"absolute_path": "/path/to/videos"},
-        "tags": ["video"]
-    }
-)
-
-launch_app(dataset_name="mixed-media")
-```
+Copy-paste starting points for COCO, YOLO, point clouds, autonomous driving groups, classification
+trees, and mixed media are in [USE-CASE-EXAMPLES.md](USE-CASE-EXAMPLES.md).
 
 ## Working with Groups
 
@@ -1021,6 +700,7 @@ For complete HF Hub import documentation, see [HF-HUB-IMPORT.md](HF-HUB-IMPORT.m
 | Parquet-based | `load_from_hub("repo_id", format="ParquetFilesDataset", filepath="image")` |
 | COCO/YOLO/VOC on HF | `snapshot_download()` → local import |
 | Rate limited (>10K) | Parquet extraction fallback (see HF-HUB-IMPORT.md) |
+| LeRobot (`lerobot/...`) | `hf download` then `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)` — see [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) |
 
 **Quick start:**
 ```python
@@ -1038,6 +718,11 @@ dataset = load_from_hub(
     persistent=True,
 )
 ```
+
+**LeRobot repos (`lerobot/...`) are the exception** — do not route them through `load_from_hub()`.
+Download with `hf download` and import with `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`
+instead. See [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) and
+[LEROBOT-IMPORT.md](LEROBOT-IMPORT.md).
 
 ## Troubleshooting
 
@@ -1070,10 +755,29 @@ dataset = load_from_hub(
 - Check FiftyOne 3D visualization is enabled
 - Verify point cloud plugin is installed
 
+**MCAP sample added but `dataset.media_type` isn't `"multimodal"`**
+- Confirm the filepath extension is exactly `.mcap`, `.bag`, or `.rrd` (lowercase)
+- A dataset's media type reflects the extensions of *all* its samples — mixing `.mcap` files with
+  images/videos in the same (non-grouped) dataset will raise a media type conflict; keep MCAP
+  recordings in their own dataset or group slice
+
+**A multimodal tile (Image/3D/Map/Plot/Logs) isn't rendering what you expect**
+- This is almost never a broken import — the viewer fails silently by design when a schema isn't
+  decodable or a topic's data doesn't start at `t=0`. Check
+  [MCAP-TROUBLESHOOTING.md](MCAP-TROUBLESHOOTING.md)'s symptom table first
+- If you're authoring, converting, or patching the `.mcap` files themselves (not just importing
+  existing ones), see [MCAP-AUTHORING.md](MCAP-AUTHORING.md) instead
+
 **Groups not detected**
 - Check folder structure matches expected patterns
 - Verify consistent naming across scenes
 - May need to specify grouping manually
+
+**`UnsupportedLeRobotVersionError` or `MalformedMediaSourceError` on a LeRobot source**
+- The source is v2.x (`meta/episodes.jsonl` instead of `meta/episodes/*.parquet`) — convert to v3
+  first. See [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md)'s Step 4 and full troubleshooting table
+- `add_samples` cannot introduce a LeRobot source — use `from_dir` / `add_dir` with
+  `dataset_type=fo.types.LeRobotDataset`
 
 ## Best Practices
 
@@ -1105,8 +809,24 @@ dataset = load_from_hub(
 - [FiftyOne Dataset Import Guide](https://docs.voxel51.com/user_guide/dataset_creation/index.html)
 - [Grouped Datasets Guide](https://docs.voxel51.com/user_guide/groups.html)
 - [Point Cloud Support](https://docs.voxel51.com/user_guide/3d.html)
+- [FiftyOne Multimodal (MCAP) Guide](https://docs.voxel51.com/user_guide/multimodal.html)
 - [Supported Dataset Formats](https://docs.voxel51.com/user_guide/dataset_creation/datasets.html)
 - [FiftyOne I/O Plugin](https://github.com/voxel51/fiftyone-plugins/tree/main/plugins/io)
 - [FiftyOne Hugging Face Integration](https://docs.voxel51.com/integrations/huggingface.html)
 - [Hugging Face Hub Documentation](https://huggingface.co/docs/hub/index)
+- [LeRobot GitHub repository](https://github.com/huggingface/lerobot) — dataset format, v2→v3 conversion scripts
+- [LeRobot dataset format docs](https://huggingface.co/docs/lerobot) — episode/chunk layout, `meta/info.json` schema
+
+This skill directory ships reference files read on demand rather than every invocation:
+
+- [HF-HUB-IMPORT.md](HF-HUB-IMPORT.md): Hugging Face Hub specifics
+- [SPECIALIZED-3D-FORMATS.md](SPECIALIZED-3D-FORMATS.md): PandaSet/nuScenes/Waymo/Argoverse/KITTI
+  3D/Lyft L5/A2D2 devkit workflow
+- [USE-CASE-EXAMPLES.md](USE-CASE-EXAMPLES.md): copy-paste starting points for common import shapes
+- [MCAP-TROUBLESHOOTING.md](MCAP-TROUBLESHOOTING.md): symptom table and why a tile isn't rendering
+- [MCAP-AUTHORING.md](MCAP-AUTHORING.md): authoring MCAP from raw data, converting ROS bags, merging/patching
+- [MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md): capability flags, validation,
+  process discipline for MCAP imports
+- [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md): full LeRobot workflow — HF Hub download, v2.x → v3
+  conversion, STOP gates, validation, and troubleshooting
 
