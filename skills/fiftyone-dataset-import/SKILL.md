@@ -1,6 +1,6 @@
 ---
 name: fiftyone-dataset-import
-description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds, MCAP multimodal recordings), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, importing robotics/AV sensor logs (MCAP, ROS bag), or creating grouped datasets.
+description: Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds, MCAP multimodal recordings), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, LeRobot v3 robot-learning episode datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, importing robotics/AV sensor logs (MCAP, ROS bag), importing LeRobot robot-learning episodes (teleop recordings, observation.state/action data), or creating grouped datasets.
 ---
 
 # Universal Dataset Import for FiftyOne
@@ -76,6 +76,21 @@ Keep error messages simple for the user. Use detailed error info internally to d
 
 ## Complete Workflow
 
+**Before scanning, identify what kind of source this is** — most sources are local directories
+and follow Steps 1-12 below, but two formats are detected up front instead of by scanning loose
+files:
+
+- A `lerobot/...` Hugging Face Hub repo id, or a local directory with `meta/info.json` at its
+  root → LeRobot. Skip straight to [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) and
+  [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md); do not run Step 1's folder scan on a bare repo id first
+  since there is nothing local to scan until it's downloaded.
+- Any other Hugging Face Hub repo id (`owner/name`) or `huggingface.co/datasets/...` URL → see
+  [Importing from Hugging Face Hub](#importing-from-hugging-face-hub) below.
+- A local directory of `.mcap`/`.bag`/`.rrd` files → Steps 1-8 apply for the scan/confirm/create
+  steps, then jump to [Step 9D](#step-9d-import-multimodal-mcap-recordings) for the import itself.
+- Everything else (a local path to images, videos, point clouds, or an existing label format) →
+  continue with Step 1.
+
 ### Step 1: Deep Folder Scan
 
 Scan the target directory to understand its structure:
@@ -127,6 +142,12 @@ transforms, diagnostics), each as its own channel/topic. There is no separate MC
 no labels file to import: one `.mcap` file is one sample. See
 [Step 9D](#step-9d-import-multimodal-mcap-recordings) below.
 
+**LeRobot datasets are also a special case.** A LeRobot source is a directory (or `lerobot/...`
+Hugging Face Hub repo) with `meta/info.json` at its root, not a pile of loose media files — do not
+scan it file-by-file like the patterns above. One sample = one **episode**, built with
+`fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`, never `add_samples`. See
+[Step 9E](#step-9e-import-lerobot-robot-learning-datasets) below.
+
 ### Step 3: Detect Label Format
 
 Identify label format from file patterns:
@@ -145,6 +166,13 @@ Identify label format from file patterns:
 | `*.json` with GeoJSON structure | GeoJSON | `GeoJSON` |
 | `.dcm` DICOM files | DICOM | `DICOM` |
 | `.tiff` with geo metadata | GeoTIFF | `GeoTIFF` |
+| `meta/info.json` + `meta/episodes/*.parquet` at the source root (or a `lerobot/...` HF repo) | LeRobot | `LeRobotDataset` |
+
+**LeRobot robot-learning datasets** are directory-based, not file-based: detect them by the
+presence of `meta/info.json` at the source root (or an HF repo id under the `lerobot/` namespace)
+before falling back to any of the patterns above. There is no labels file to import separately —
+episodes, tasks, and `observation.state`/`action` data all come from the LeRobot importer. See
+[Step 9E](#step-9e-import-lerobot-robot-learning-datasets).
 
 **Specialized autonomous driving formats** (PandaSet, nuScenes, Waymo Open, Argoverse, KITTI 3D,
 Lyft L5, A2D2) need an external devkit and a conversion step. See
@@ -504,6 +532,44 @@ an Enterprise-only feature and out of scope for a local import. See the
 [FiftyOne Multimodal guide](https://docs.voxel51.com/user_guide/multimodal.html) if a user asks
 about it.
 
+### Step 9E: Import LeRobot Robot-Learning Datasets
+
+LeRobot is a directory-based robot-learning dataset format (local, or downloaded from a
+Hugging Face Hub `lerobot/...` repo, e.g. `lerobot/aloha_sim_insertion_human`). One sample = one
+**episode**, not one file, and `fo.types.LeRobotDataset` only supports the v3 layout.
+
+**Full workflow, STOP gates, and troubleshooting are in
+[LEROBOT-IMPORT.md](LEROBOT-IMPORT.md) — read it before importing a LeRobot source.** Summary:
+
+1. Identify the source (local path or HF repo id) and download it if it's on the Hub.
+2. Inspect `meta/info.json` and detect `codebase_version`; convert v2.x → v3 with `lerobot`'s
+   converter if needed (`fo.types.LeRobotDataset` raises `UnsupportedLeRobotVersionError` on v2.x).
+3. **STOP gate:** confirm required packages (`pyarrow>=10.0.0`, `huggingface_hub`, `lerobot`) before
+   installing anything.
+4. **STOP gate:** present the import plan (episode count, fps, robot_type, camera/state/action
+   shapes) and wait for confirmation before creating the dataset.
+5. Check name collisions with `fo.list_datasets()`, then import:
+
+```python
+import fiftyone as fo
+
+dataset = fo.Dataset.from_dir(
+    dataset_dir="/abs/path/lerobot/<name>",
+    dataset_type=fo.types.LeRobotDataset,
+    name="<name>",
+    persistent=True,
+)
+```
+
+6. Validate imported episode count against `meta/info.json`'s `total_episodes` and report
+   `dataset.info["lerobot"]["skipped_episodes"]` — do not declare success if either mismatches.
+7. Launch the App: episodes render with per-camera Image tiles, a **State & Action** tile, Plot
+   tiles for state/action dimensions, and a **Streams** tab.
+
+Use `add_samples` for nothing here — it cannot introduce a LeRobot source. Use
+`dataset.add_dir(..., dataset_type=fo.types.LeRobotDataset)` to add further LeRobot sources to an
+existing dataset.
+
 ### Step 10: Import Additional Labels (Optional)
 
 If labels weren't imported with the specialized format, add them separately:
@@ -580,6 +646,7 @@ launch_app(dataset_name="my-dataset")
 | GeoJSON | `GeoJSON` | geolocation | `*.json` |
 | GeoTIFF | `GeoTIFF` | geolocation | `.tiff` with geo |
 | FiftyOne Dataset | `FiftyOne Dataset` | all types | Exported format |
+| LeRobot | `LeRobotDataset` | episode metadata (task, state, action, duration) | `meta/info.json` + `meta/episodes/*.parquet` |
 
 ## Common Use Cases
 
@@ -633,6 +700,7 @@ For complete HF Hub import documentation, see [HF-HUB-IMPORT.md](HF-HUB-IMPORT.m
 | Parquet-based | `load_from_hub("repo_id", format="ParquetFilesDataset", filepath="image")` |
 | COCO/YOLO/VOC on HF | `snapshot_download()` → local import |
 | Rate limited (>10K) | Parquet extraction fallback (see HF-HUB-IMPORT.md) |
+| LeRobot (`lerobot/...`) | `hf download` then `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)` — see [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) |
 
 **Quick start:**
 ```python
@@ -650,6 +718,11 @@ dataset = load_from_hub(
     persistent=True,
 )
 ```
+
+**LeRobot repos (`lerobot/...`) are the exception** — do not route them through `load_from_hub()`.
+Download with `hf download` and import with `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`
+instead. See [Step 9E](#step-9e-import-lerobot-robot-learning-datasets) and
+[LEROBOT-IMPORT.md](LEROBOT-IMPORT.md).
 
 ## Troubleshooting
 
@@ -700,6 +773,12 @@ dataset = load_from_hub(
 - Verify consistent naming across scenes
 - May need to specify grouping manually
 
+**`UnsupportedLeRobotVersionError` or `MalformedMediaSourceError` on a LeRobot source**
+- The source is v2.x (`meta/episodes.jsonl` instead of `meta/episodes/*.parquet`) — convert to v3
+  first. See [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md)'s Step 4 and full troubleshooting table
+- `add_samples` cannot introduce a LeRobot source — use `from_dir` / `add_dir` with
+  `dataset_type=fo.types.LeRobotDataset`
+
 ## Best Practices
 
 1. **Always scan first** - Understand the data before importing
@@ -735,6 +814,8 @@ dataset = load_from_hub(
 - [FiftyOne I/O Plugin](https://github.com/voxel51/fiftyone-plugins/tree/main/plugins/io)
 - [FiftyOne Hugging Face Integration](https://docs.voxel51.com/integrations/huggingface.html)
 - [Hugging Face Hub Documentation](https://huggingface.co/docs/hub/index)
+- [LeRobot GitHub repository](https://github.com/huggingface/lerobot) — dataset format, v2→v3 conversion scripts
+- [LeRobot dataset format docs](https://huggingface.co/docs/lerobot) — episode/chunk layout, `meta/info.json` schema
 
 This skill directory ships reference files read on demand rather than every invocation:
 
@@ -746,4 +827,6 @@ This skill directory ships reference files read on demand rather than every invo
 - [MCAP-AUTHORING.md](MCAP-AUTHORING.md): authoring MCAP from raw data, converting ROS bags, merging/patching
 - [MCAP-DATASET-AND-VALIDATION.md](MCAP-DATASET-AND-VALIDATION.md): capability flags, validation,
   process discipline for MCAP imports
+- [LEROBOT-IMPORT.md](LEROBOT-IMPORT.md): full LeRobot workflow — HF Hub download, v2.x → v3
+  conversion, STOP gates, validation, and troubleshooting
 

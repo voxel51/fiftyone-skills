@@ -6,7 +6,7 @@ This repository contains skills for computer vision workflows using FiftyOne and
 
 ### FiftyOne Dataset Import (`fiftyone-dataset-import/`)
 
-**When to use:** User wants to import datasets from local files, Hugging Face Hub, or any supported format (COCO, YOLO, VOC, KITTI, etc.), including multimodal grouped datasets and MCAP robotics/AV sensor recordings.
+**When to use:** User wants to import datasets from local files, Hugging Face Hub, or any supported format (COCO, YOLO, VOC, KITTI, etc.), including multimodal grouped datasets, MCAP robotics/AV sensor recordings, or LeRobot robot-learning episode datasets.
 
 **Instructions:** Load the skill file at `skills/fiftyone-dataset-import/SKILL.md`
 
@@ -15,13 +15,17 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - `@voxel51/io` plugin for importing data
 - `@voxel51/utils` plugin for dataset management
 - `huggingface_hub` package for HF Hub imports
+- For LeRobot sources specifically: `pyarrow>=10.0.0` (import), `lerobot` (v2.x → v3 conversion
+  only) — no MCP server needed for this path, it uses the Python SDK directly
+  (`fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`)
 
 **Workflow summary:**
 1. Scan directory or HF Hub to detect media and labels
-2. Auto-detect format (COCO, YOLO, VOC, parquet, FiftyOne, etc.)
+2. Auto-detect format (COCO, YOLO, VOC, parquet, FiftyOne, LeRobot, etc.)
 3. Confirm findings with user
 4. Create dataset and import samples
-5. For HF Hub: use `load_from_hub()` or `snapshot_download()`
+5. For HF Hub: use `load_from_hub()` or `snapshot_download()`; for `lerobot/...` repos or a local
+   LeRobot layout, use `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)` instead
 6. Validate import count
 7. Launch App to view
 
@@ -33,6 +37,9 @@ This repository contains skills for computer vision workflows using FiftyOne and
 - MCAP robotics/AV sensor recordings; see `MCAP-TROUBLESHOOTING.md`, `MCAP-AUTHORING.md`, and
   `MCAP-DATASET-AND-VALIDATION.md` in the skill directory for authoring, converting, and
   troubleshooting beyond a plain import
+- LeRobot v3 robot-learning episode datasets (local or Hugging Face Hub `lerobot/...` repos),
+  including v2.x → v3 conversion; see `LEROBOT-IMPORT.md` in the skill directory for the full
+  workflow and troubleshooting
 
 ### FiftyOne Dataset Export (`fiftyone-dataset-export/`)
 

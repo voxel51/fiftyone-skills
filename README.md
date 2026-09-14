@@ -44,7 +44,7 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 
 | Skill | Description | MCP |
 |-------|-------------|-----|
-| 📥 [**Dataset Import**](skills/fiftyone-dataset-import/SKILL.md) | Universal import for all media types, label formats, multimodal groups, MCAP recordings, and Hugging Face Hub | Yes |
+| 📥 [**Dataset Import**](skills/fiftyone-dataset-import/SKILL.md) | Universal import for all media types, label formats, multimodal groups, MCAP recordings, LeRobot robot-learning episodes, and Hugging Face Hub | Yes |
 | 📤 [**Dataset Export**](skills/fiftyone-dataset-export/SKILL.md) | Export datasets to COCO, YOLO, VOC, CVAT, CSV, Hugging Face Hub, and more | Yes |
 | 🔍 [**Find Duplicates**](skills/fiftyone-find-duplicates/SKILL.md) | Find and remove duplicate images using brain similarity | Yes |
 | 🤖 [**Dataset Inference**](skills/fiftyone-dataset-inference/SKILL.md) | Run Zoo models for detection, classification, segmentation, embeddings | Yes |
