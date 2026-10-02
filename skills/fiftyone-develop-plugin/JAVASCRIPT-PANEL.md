@@ -335,8 +335,8 @@ import { Button, Input, Select, Toast, Stack, Heading, Text } from "@voxel51/voo
 
 const MyPanel: React.FC = () => {
   return (
-    <Stack spacing="md">
-      <Heading level={2}>Panel Title</Heading>
+    <Stack orientation="col" spacing="md">
+      <Heading level="h2">Panel Title</Heading>
       <Input placeholder="Enter value..." />
       <Button variant="primary">Submit</Button>
     </Stack>
@@ -344,10 +344,10 @@ const MyPanel: React.FC = () => {
 };
 ```
 
-**For complete VOODO documentation**: Invoke the `fiftyone-voodo-design` skill, which:
-- Fetches current components from llms.txt
-- Lists design tokens (colors, spacing, typography)
-- Provides usage patterns and Storybook links
+**For complete VOODO documentation**: run `npx @voxel51/voodo docs <Name>` in your plugin, or invoke the `fiftyone-voodo-design` skill, which:
+- Looks up components and token values in your installed VOODO version
+- Explains the conventions (string token props, `Stack` layout, `Text` roles, color tokens)
+- Maps common UI jobs to components
 
 **Quick reference**: https://voodo.dev.fiftyone.ai/
 

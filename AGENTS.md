@@ -215,16 +215,16 @@ This repository contains skills for computer vision workflows using FiftyOne and
 
 **Key requirements:**
 - Node.js 16+ for JavaScript panels
-- `@voxel51/voodo` npm package
+- `@voxel51/voodo` npm package, 2.1.0 or later
 
 **Workflow summary:**
-1. Fetch the LLM reference via WebFetch from `voodo-llm-reference.md`
-2. Use design token enums (Size, Spacing, Variant, etc.) — never raw strings
-3. Follow composition patterns (FormField wraps controls, Stack for layout)
-4. Build panel following FiftyOne patterns (dark theme, responsive)
+1. Look up components and token values with `npx @voxel51/voodo list` / `docs <Name>` / `tokens <Group>` in the consuming project
+2. Pass token props as plain strings (`size="sm"`, `variant="primary"`)
+3. Follow composition patterns (FormField wraps controls, Stack for layout, `Text` role variants for type)
+4. Build panel following FiftyOne patterns (dark theme by default; check light mode too)
 
 **Documentation sources:**
-- WebFetch: `https://voodo.dev.fiftyone.ai/voodo-llm-reference.md` (complete component API, tokens, patterns)
+- `npx @voxel51/voodo docs <Name>` (props, docs, and token values for the installed version)
 - Source repo: `https://github.com/voxel51/design-system`
 - Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
 
@@ -598,10 +598,10 @@ When users want to report issues or provide feedback, **YOU (the agent) must aut
 - [FiftyOne LLM Docs](https://docs.voxel51.com/llms.txt) - Fetch this for comprehensive FiftyOne API reference
 - [FiftyOne MCP Server](https://github.com/voxel51/fiftyone-mcp-server)
 - [FiftyOne Plugins](https://github.com/voxel51/fiftyone-plugins)
-- [VOODO Design System](https://voodo.dev.fiftyone.ai/voodo-llm-reference.md) - Fetch this for React component documentation
+- [VOODO Design System](https://voodo.dev.fiftyone.ai/) - Storybook; for React component docs run `npx @voxel51/voodo docs <Name>`
 
 ## External Documentation
 
 When you need detailed FiftyOne API information beyond what's in the skills, fetch:
 - `https://docs.voxel51.com/llms.txt` - Complete FiftyOne documentation for LLMs
-- `https://voodo.dev.fiftyone.ai/voodo-llm-reference.md` - VOODO React component library docs
+- VOODO React component docs: run `npx @voxel51/voodo docs <Name>` in a project that installs `@voxel51/voodo`

@@ -86,7 +86,7 @@
       "skills": "./",
       "emoji": "🎨",
       "category": "Development",
-      "description": "Build FiftyOne UIs using VOODO (@voxel51/voodo), the official React component library. Use when building plugin panels, creating interactive UIs, styling FiftyOne applications, or needing React components with proper design tokens. Fetches complete component API reference dynamically."
+      "description": "Build FiftyOne UIs using VOODO (@voxel51/voodo), the official React component library. Use when building plugin panels, creating interactive UIs, styling FiftyOne applications, or needing React components with proper design tokens. Looks up the installed version's components and token values with `npx @voxel51/voodo`."
     },
     {
       "name": "fiftyone-issue-triage",

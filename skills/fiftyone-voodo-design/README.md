@@ -26,7 +26,7 @@ Ask your AI assistant:
 "Style this plugin panel to match the FiftyOne design system"
 ```
 
-The skill fetches the complete VOODO component API reference before writing any code, ensuring it uses the correct design tokens, component props, and composition patterns.
+Before writing any code, the skill looks up components and token values in your installed VOODO version with `npx @voxel51/voodo` (2.1.0 or later), so it uses props and values that exist in that version.
 
 ## Example
 
@@ -34,7 +34,7 @@ The skill fetches the complete VOODO component API reference before writing any 
 "Create a FiftyOne panel with a search input and a scrollable list of results using VOODO"
 ```
 
-The skill will generate a React component using VOODO's `Input`, `ScrollArea`, and layout components with the correct design tokens.
+The skill will generate a React component using VOODO's `Input`, `RichList`, and `Stack` components with the correct design tokens.
 
 ## See also
 
