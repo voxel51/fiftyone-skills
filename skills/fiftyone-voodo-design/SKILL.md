@@ -1,99 +1,90 @@
 ---
 name: fiftyone-voodo-design
-description: Build FiftyOne UIs using VOODO (@voxel51/voodo), the official React component library. Use when building plugin panels, creating interactive UIs, or styling FiftyOne applications. Fetches complete component API reference dynamically.
+description: Build FiftyOne UIs using VOODO (@voxel51/voodo), the official React component library. Use when building plugin panels, creating interactive UIs, styling FiftyOne applications, or choosing components, text sizes, colors, and spacing. Looks up the installed version's components and token values with `npx @voxel51/voodo` before writing code.
 ---
 
 # VOODO Design System for FiftyOne
 
-VOODO (`@voxel51/voodo`) is the official React component library for FiftyOne applications. Source: https://github.com/voxel51/design-system
+VOODO (`@voxel51/voodo`) is the official React component library for FiftyOne applications. Source: https://github.com/voxel51/design-system. Storybook: https://voodo.dev.fiftyone.ai
 
 ## Key Directive
 
-**ALWAYS fetch the LLM reference BEFORE writing any UI code:**
+**Look up components in the installed package BEFORE writing any UI code.** VOODO ships its own docs command, which reads the version your project installed:
 
-```
-WebFetch(
-    url="https://voodo.dev.fiftyone.ai/voodo-llm-reference.md",
-    prompt="Read the complete VOODO component API, design tokens, and composition patterns"
-)
-```
-
-This gives you:
-- All design token enums with exact member values (Size, Spacing, Variant, Orientation, etc.)
-- Every component's props, types, defaults, and usage examples
-- Composition patterns for common layouts (forms, cards, lists, selects)
-- Anti-patterns to avoid (e.g. raw Tailwind vs. component props)
-
-## Workflow
-
-### 1. Fetch the reference
-
-```
-WebFetch(
-    url="https://voodo.dev.fiftyone.ai/voodo-llm-reference.md",
-    prompt="What VOODO components and tokens are available for building [describe UI]?"
-)
+```bash
+npx @voxel51/voodo list             # every component, one line each
+npx @voxel51/voodo docs Button      # one component's props, docs, and allowed token values
+npx @voxel51/voodo tokens Spacing   # one token group's values (all groups with no argument)
+npx @voxel51/voodo icons            # every icon component name
 ```
 
-### 2. Use components and design tokens from the reference
+Run it from the project that depends on `@voxel51/voodo` (2.1.0 or later). Don't guess component names or prop values: `docs` prints the exact strings each prop accepts.
 
-Always import from `@voxel51/voodo`. Always use enum values — never pass raw strings.
+## Rules
 
-```typescript
-import { Button, Input, Stack, Text, FormField } from "@voxel51/voodo";
-import { Orientation, Size, Spacing, Variant, TextColor } from "@voxel51/voodo";
-```
+The docs say what exists. These rules say how to use it:
 
-### 3. Follow composition patterns
+1. **Token props take plain strings**: `variant="primary"`, `size="sm"`, `spacing="md"`. The const members (`Size.Sm`) still compile but are the older style.
+2. **Compose before you build.** Check `npx @voxel51/voodo list` before hand-rolling anything. Mid-level patterns usually exist: `FormField`, `RichList`, `EmptyState`, `Toolbar`, `Modal`.
+3. **Layout with `<Stack>`** (`orientation="row"` or `"col"`, `spacing`, `align`, `justify`), not Tailwind flex classes.
+4. **Text with `<Text variant=…>` roles**: `body-primary` (15px, the default), `body-secondary` (14px), `body-tertiary` (12px), `heading-xs` … `heading-xl`, `label`, `caption`, `code-primary`. The size-only variants (`"xs"` … `"xxl"`) are deprecated. Pick the role by size; don't reshape `Text` with font, leading, or `style` overrides.
+5. **Colors are tokens**: pass them as props (`color="text-secondary"`). Outside VOODO components, use the exported helpers `bgColorClass`, `textColorClass`, `borderColorClass`, or `getColorCssVar`. Never a hand-written `var(--color-…)` or a raw hex.
+6. **Data colors**: `viz-chart-*` for charts and other UI; `viz-overlay-*` for labels drawn over images and video.
+7. **Icons are components**: `<CheckIcon />`, `<EditIcon />` (`npx @voxel51/voodo icons`). `<Icon name=…>` is deprecated.
+8. **Check both themes.** The FiftyOne App defaults to dark mode, but surfaces differ in light mode (`bg-card-elevated` is white there).
 
-The reference includes patterns for:
-- **Forms**: Wrap controls in `<FormField>`, group with `<FormFieldGroup>`
-- **Layout**: Use `<Stack>` with `orientation`, `spacing`, `align`, `justify` props — not Tailwind flex classes
-- **Cards**: Use `<Card>` / `<RichCard>` for contained content
-- **Lists**: Use `Descriptor<T>[]` pattern with `<RichList>` or `<RichButtonGroup>`
-- **Feedback**: Use `<Toast>`, `<Tooltip>`, `<EmptyState>`
+## Getting started
 
-## Installation
+1. **Install** it in your plugin or app:
+   ```json
+   {
+     "dependencies": {
+       "@voxel51/voodo": "^2.1.0"
+     }
+   }
+   ```
+2. **Import the theme CSS once** in your entry point. Every component relies on its CSS variables:
+   ```typescript
+   import "@voxel51/voodo/theme.css";
+   ```
+3. **Render a first component.** Everything imports from `@voxel51/voodo`; see the panel below.
+4. **Read a component's docs** with `npx @voxel51/voodo docs <Name>`. It prints the component's TypeScript props with their docs, then the allowed values for every token type those props use:
+   ```
+   // Token values used above
+   type ButtonSize = "xs" | "sm" | "md";
+   type Variant = "primary" | "secondary" | "success" | "danger" | "icon" | "borderless" | "expressive";
+   ```
+   Pass those strings as props. A `// deprecated:` comment lists values that still work but don't belong in new code.
 
-```json
-{
-  "dependencies": {
-    "@voxel51/voodo": "latest"
-  }
-}
-```
+### A first panel
 
-Import the theme CSS in your app entry point:
-
-```typescript
-import "@voxel51/voodo/theme.css";
-```
-
-## FiftyOne Patterns
-
-- **Dark theme**: FiftyOne App uses dark mode by default
-- **Semantic variants**: Use `Variant.Success`, `Variant.Danger`, `Variant.Secondary` for actions
-- **Design tokens**: Always use enum values (`Spacing.Md`, `Size.Sm`) — never arbitrary CSS values
-- **Layout**: Use `<Stack>` with `align` and `justify` props instead of Tailwind `items-*` / `justify-*` classes
-
-## Integration with FiftyOne SDK
-
-```typescript
+```tsx
+import { useState } from "react";
 import { useRecoilValue } from "recoil";
-import * as fos from "@fiftyone/state";  // Standard FiftyOne alias
-import { Button, Text, Stack, FormField, Input } from "@voxel51/voodo";
-import { Orientation, Spacing, Size, Variant, TextColor } from "@voxel51/voodo";
+import * as fos from "@fiftyone/state"; // Standard FiftyOne alias
+import { Button, FormField, Input, Stack, Text } from "@voxel51/voodo";
 
 const MyPanel: React.FC = () => {
   const dataset = useRecoilValue(fos.dataset);
+  const [query, setQuery] = useState("");
+
   return (
-    <Stack orientation={Orientation.Column} spacing={Spacing.Md}>
-      <Text color={TextColor.Secondary}>{dataset?.name}</Text>
+    <Stack orientation="col" spacing="md">
+      <Text variant="body-secondary" color="text-secondary">
+        {dataset?.name}
+      </Text>
       <FormField
         label="Filter"
-        control={<Input size={Size.Sm} placeholder="Search..." />}
+        control={
+          <Input
+            size="sm"
+            placeholder="Search..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        }
       />
-      <Button variant={Variant.Primary} size={Size.Sm}>
+      <Button variant="primary" size="sm" onClick={() => runSearch(query)}>
         Process
       </Button>
     </Stack>
@@ -101,13 +92,151 @@ const MyPanel: React.FC = () => {
 };
 ```
 
+## Patterns
+
+These follow the shapes of FiftyOne's own similarity-search panel, written in the current style.
+
+### Panel header with actions
+
+```tsx
+import {
+  AddIcon,
+  Button,
+  Heading,
+  IconAction,
+  RefreshIcon,
+  Stack,
+  Tooltip,
+} from "@voxel51/voodo";
+
+<Stack orientation="row" align="center" justify="between">
+  <Heading level="h2">Searches</Heading>
+  <Stack orientation="row" spacing="sm" align="center">
+    <Tooltip content="Refresh">
+      <IconAction icon={RefreshIcon} aria-label="Refresh" onClick={onRefresh} />
+    </Tooltip>
+    <Button variant="primary" size="sm" leadingIcon={AddIcon} onClick={onNew}>
+      New search
+    </Button>
+  </Stack>
+</Stack>;
+```
+
+Icon-only buttons are `IconAction`, always with an `aria-label`.
+
+### List with an empty state
+
+```tsx
+import {
+  DeleteIcon,
+  EmptyState,
+  IconAction,
+  RichList,
+  SearchIcon,
+  Stack,
+  Text,
+} from "@voxel51/voodo";
+
+const items = runs.map((run) => ({
+  id: run.id,
+  data: {
+    primaryContent: (
+      <Stack orientation="col" spacing="xs">
+        <Text variant="body-primary">{run.name}</Text>
+        <Text variant="body-tertiary" color="text-secondary">
+          {run.summary}
+        </Text>
+      </Stack>
+    ),
+    actions: (
+      <IconAction
+        icon={DeleteIcon}
+        aria-label="Delete"
+        onClick={() => onDelete(run.id)}
+      />
+    ),
+  },
+}));
+
+return runs.length === 0 ? (
+  <EmptyState
+    icon={SearchIcon}
+    title="No searches yet"
+    description="Start a new search to find similar samples."
+  />
+) : (
+  <RichList listItems={items} />
+);
+```
+
+`RichList` takes descriptors: `{ id, data }`, where `data` holds the row's props. Use `EmptyState`, not a centered stack of text.
+
+### Form
+
+```tsx
+import {
+  Button,
+  FormField,
+  Input,
+  RadioGroup,
+  Select,
+  Stack,
+} from "@voxel51/voodo";
+
+const indexOptions = indexes.map((key) => ({ id: key, data: { label: key } }));
+
+<Stack orientation="col" spacing="lg">
+  <FormField
+    label="Similarity index"
+    control={
+      <Select
+        exclusive
+        options={indexOptions}
+        value={index}
+        onChange={(next) => setIndex(typeof next === "string" ? next : undefined)}
+      />
+    }
+  />
+  <FormField
+    label="Target"
+    control={
+      <RadioGroup
+        options={[
+          { value: "dataset", label: "Full dataset" },
+          { value: "view", label: "Current view" },
+        ]}
+        value={target}
+        onChange={setTarget}
+      />
+    }
+  />
+  <FormField
+    label="Max results"
+    description="How many similar samples to return."
+    control={
+      <Input type="number" value={k} onChange={(e) => setK(e.target.value)} />
+    }
+  />
+  <Stack orientation="row" spacing="sm" justify="end">
+    <Button variant="secondary" onClick={onCancel}>
+      Cancel
+    </Button>
+    <Button variant="primary" onClick={onSubmit} disabled={!index}>
+      Search
+    </Button>
+  </Stack>
+</Stack>;
+```
+
+Wrap every control in `FormField` for its label, description, and error.
+
 ## Resources
 
-| Resource | URL |
-|----------|-----|
-| **LLM Reference** (fetch first) | https://voodo.dev.fiftyone.ai/voodo-llm-reference.md |
-| **Source repo** | https://github.com/voxel51/design-system |
+| Resource | Where |
+|----------|-------|
+| **Component docs** (use first) | `npx @voxel51/voodo docs <Name>` in your project |
 | **Interactive Storybook** | https://voodo.dev.fiftyone.ai/ |
+| **Source repo** | https://github.com/voxel51/design-system |
 | **npm package** | `@voxel51/voodo` |
 
 **Related**: Use `fiftyone-develop-plugin` skill for full plugin setup.
@@ -116,7 +245,8 @@ const MyPanel: React.FC = () => {
 
 | Problem | Solution |
 |---------|----------|
-| Component not found | Fetch the LLM reference to verify current component name |
-| Wrong prop value | Use enum members (e.g. `Size.Md`), not strings (e.g. `"md"`) |
+| Component not found | `npx @voxel51/voodo list`; names change between versions |
+| Wrong prop value | `npx @voxel51/voodo docs <Name>` lists the strings each prop accepts |
+| Text looks too small or too large | Use a role variant (`body-secondary`, …), not a size-only one (`"sm"`) |
 | Layout not working | Use `<Stack>` with `orientation`, `spacing`, `align`, `justify` props |
-| Styles not applying | Ensure `@voxel51/voodo/theme.css` is imported; test in dark mode |
+| Styles not applying | Ensure `@voxel51/voodo/theme.css` is imported; check dark and light mode |
