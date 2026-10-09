@@ -43,7 +43,7 @@ The docs say what exists. These rules say how to use it:
 | Forms | `FormField` around `Input`, `Select`, `Combobox`, `Checkbox`, `RadioGroup`, `Toggle`, `TextArea`, `DatePicker`, sliders; `FormFieldGroup` |
 | Lists and tables | `RichList`, `Table` (+ `TableHeader`, `TableRow`, `TableCell`, …), `TreeView`, `ImageList` |
 | Overlays | `Modal`, `Sheet`, `Drawer`, `Popover`, `Tooltip` |
-| Feedback | `Toast` / `ToastContainer`, `Progress`, `Spinner`, `LoadingDots`, `EmptyState` |
+| Feedback | `Toast` / `ToastContainer`, `Progress`, `Loader` (`type="spinner"` or `"bars"` for AI work), `LoadingDots`, `StatusDot`, `EmptyState` |
 | Tabs and steps | `Tabs` / `Tab`, `ToggleSwitch`, `StepRail` |
 | Files | `Dropzone`, `UploadList` |
 
