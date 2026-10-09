@@ -347,7 +347,7 @@ const MyPanel: React.FC = () => {
 **For complete VOODO documentation**: run `npx @voxel51/voodo docs <Name>` in your plugin, or invoke the `fiftyone-voodo-design` skill, which:
 - Looks up components and token values in your installed VOODO version
 - Explains the conventions (string token props, `Stack` layout, `Text` roles, color tokens)
-- Maps common UI jobs to components
+- Shows patterns for panel headers, lists, and forms
 
 **Quick reference**: https://voodo.dev.fiftyone.ai/
 

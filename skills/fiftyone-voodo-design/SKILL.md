@@ -33,22 +33,6 @@ The docs say what exists. These rules say how to use it:
 7. **Icons are components**: `<CheckIcon />`, `<EditIcon />` (`npx @voxel51/voodo icons`). `<Icon name=…>` is deprecated.
 8. **Check both themes.** The FiftyOne App defaults to dark mode, but surfaces differ in light mode (`bg-card-elevated` is white there).
 
-## Common jobs
-
-| Job | Components |
-|-----|------------|
-| Panel layout | `Stack`, `Card`, `Divider` |
-| Headings and text | `Heading` (`level="h1"` … `"h4"`), `Text` |
-| Actions | `Button`, `IconAction`, `TextAction`, `Dropdown` / `ContextMenu` with the `Menu*` items |
-| Forms | `FormField` around `Input`, `Select`, `Combobox`, `Checkbox`, `RadioGroup`, `Toggle`, `TextArea`, `DatePicker`, sliders; `FormFieldGroup` |
-| Lists and tables | `RichList`, `Table` (+ `TableHeader`, `TableRow`, `TableCell`, …), `TreeView`, `ImageList` |
-| Overlays | `Modal`, `Sheet`, `Drawer`, `Popover`, `Tooltip` |
-| Feedback | `Toast` / `ToastContainer`, `Progress`, `Loader` (`type="spinner"` or `"bars"` for AI work), `LoadingDots`, `StatusDot`, `EmptyState` |
-| Tabs and steps | `Tabs` / `Tab`, `ToggleSwitch`, `StepRail` |
-| Files | `Dropzone`, `UploadList` |
-
-Run `npx @voxel51/voodo docs <Name>` for each before using it.
-
 ## Getting started
 
 1. **Install** it in your plugin or app:
