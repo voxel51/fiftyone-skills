@@ -65,11 +65,13 @@ against a local FiftyOne install without any of the steps below.
 ## Prerequisites
 
 - A Voxel51 deployment with remote agent access enabled by an admin.
-- The deployment's gateway URL (for MCP:
-  `https://<your-deployment>/api/proxy/fiftyone-teams/mcp`; for the CLI: an API base
-  URL, `https://<your-deployment>/api/proxy/fiftyone-teams`, and an auth base URL,
-  `https://<your-deployment>/cas/api`). Get the deployment hostname from the user or
-  their FiftyOne admin, don't guess it, but these path suffixes are fixed.
+- The deployment's gateway URL. On **Voxel51 Cloud**, the host is always
+  `app.voxel51.com`, no need to ask. On a **self-hosted** deployment, ask the
+  user or their FiftyOne admin for the hostname, don't guess it. Either way
+  the path suffixes are fixed: for MCP,
+  `https://<host>/api/proxy/fiftyone-teams/mcp`; for the CLI, an API base URL,
+  `https://<host>/api/proxy/fiftyone-teams`, and an auth base URL,
+  `https://<host>/cas/api`.
 - To use the CLI path: a `fiftyone` install that includes the `agent` command group
   (`fiftyone agent --help` should list `login`, `status`, `logout`, `operators`).
 - To use the MCP path: an MCP client that supports remote HTTP servers with OAuth
@@ -79,8 +81,9 @@ against a local FiftyOne install without any of the steps below.
 
 ### Path A: Connect via MCP (Claude Code, Cursor, any MCP client)
 
-1. Ask the user for their deployment's agent gateway URL if not already given:
-   `https://<your-deployment>/api/proxy/fiftyone-teams/mcp`.
+1. Ask which they're on: Voxel51 Cloud (host is `app.voxel51.com`) or
+   self-hosted (ask for their deployment's hostname). The gateway URL is
+   `https://<host>/api/proxy/fiftyone-teams/mcp`.
 2. Add it as a remote MCP server. In Claude Code:
    ```
    claude mcp add --transport http --scope user voxel51-agent-gateway \
