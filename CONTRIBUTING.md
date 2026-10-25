@@ -70,25 +70,16 @@ node scripts/validate-template.mjs
 
 This checks frontmatter, path safety, and naming conventions. Fix any errors before submitting.
 
-### 7. Update `AGENTS.md`
+### 7. Regenerate `AGENTS.md`
 
-Add an entry for your skill under the **Available Skills** section of `AGENTS.md`. Follow the existing format:
+The **Available Skills** section of `AGENTS.md` is generated from each `SKILL.md`'s frontmatter, so don't edit it by hand. After adding or changing a skill, run:
 
-```markdown
-### FiftyOne My Skill (`fiftyone-my-skill/`)
-
-**When to use:** [One sentence describing when an agent should load this skill]
-
-**Instructions:** Load the skill file at `skills/fiftyone-my-skill/SKILL.md`
-
-**Key requirements:**
-- [Any dependencies, plugins, or MCP tools required]
-
-**Workflow summary:**
-1. Step one
-2. Step two
-3. ...
+```bash
+pip install pyyaml
+python scripts/generate_agents.py
 ```
+
+Commit the updated `AGENTS.md`. CI runs `python scripts/generate_agents.py --check` and fails if it is out of date. The script also rejects frontmatter that is missing `name` or `description`, uses a `name` that doesn't match the skill's directory, uses keys outside the [Agent Skills spec](https://agentskills.io/specification), or reuses another skill's name.
 
 ### 8. Add your skill to the README table
 

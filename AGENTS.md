@@ -4,432 +4,119 @@ This repository contains skills for computer vision workflows using FiftyOne and
 
 ## Available Skills
 
-### FiftyOne Dataset Import (`fiftyone-dataset-import/`)
-
-**When to use:** User wants to import datasets from local files, Hugging Face Hub, or any supported format (COCO, YOLO, VOC, KITTI, etc.), including multimodal grouped datasets, MCAP robotics/AV sensor recordings, or LeRobot robot-learning episode datasets.
-
-**Instructions:** Load the skill file at `skills/fiftyone-dataset-import/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/io` plugin for importing data
-- `@voxel51/utils` plugin for dataset management
-- `huggingface_hub` package for HF Hub imports
-- For LeRobot sources specifically: `pyarrow>=10.0.0` (import), `lerobot` (v2.x → v3 conversion
-  only) — no MCP server needed for this path, it uses the Python SDK directly
-  (`fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)`)
-
-**Workflow summary:**
-1. Scan directory or HF Hub to detect media and labels
-2. Auto-detect format (COCO, YOLO, VOC, parquet, FiftyOne, LeRobot, etc.)
-3. Confirm findings with user
-4. Create dataset and import samples
-5. For HF Hub: use `load_from_hub()` or `snapshot_download()`; for `lerobot/...` repos or a local
-   LeRobot layout, use `fo.Dataset.from_dir(..., dataset_type=fo.types.LeRobotDataset)` instead
-6. Validate import count
-7. Launch App to view
-
-**Supported sources:**
-- Local directories with media files
-- COCO, YOLO, VOC, KITTI, CVAT annotations
-- Hugging Face Hub (FiftyOne-formatted, parquet, or raw formats)
-- Multimodal grouped datasets (autonomous driving)
-- MCAP robotics/AV sensor recordings; see `MCAP-TROUBLESHOOTING.md`, `MCAP-AUTHORING.md`, and
-  `MCAP-DATASET-AND-VALIDATION.md` in the skill directory for authoring, converting, and
-  troubleshooting beyond a plain import
-- LeRobot v3 robot-learning episode datasets (local or Hugging Face Hub `lerobot/...` repos),
-  including v2.x → v3 conversion; see `LEROBOT-IMPORT.md` in the skill directory for the full
-  workflow and troubleshooting
-
-### FiftyOne Dataset Export (`fiftyone-dataset-export/`)
-
-**When to use:** User wants to export datasets to standard formats, share on Hugging Face Hub, convert between formats, or create training data archives.
-
-**Instructions:** Load the skill file at `skills/fiftyone-dataset-export/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/io` plugin for exporting data
-- `huggingface_hub` package for HF Hub exports
-
-**Workflow summary:**
-1. Load dataset and review with `dataset_summary()`
-2. Confirm export format and destination
-3. For local: use `export_samples` operator
-4. For HF Hub: use `push_to_hub()` function
-5. Verify exported file counts
-
-**Supported destinations:**
-- Local directories (COCO, YOLO, VOC, CVAT, CSV, etc.)
-- Hugging Face Hub (public or private repos)
-- FiftyOne Dataset format (full backup with brain runs)
-
-### FiftyOne Model Evaluation (`fiftyone-model-evaluation/`)
-
-**When to use:** User wants to evaluate model predictions against ground truth, compute mAP, precision, recall, confusion matrices, or analyze TP/FP/FN examples.
-
-**Instructions:** Load the skill file at `skills/fiftyone-model-evaluation/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/evaluation` plugin must be installed
-- Dataset with both predictions and ground truth fields
-
-**Workflow summary:**
-1. Set context with dataset name
-2. Identify prediction and ground truth fields
-3. Choose evaluation protocol (COCO, Open Images, etc.)
-4. Execute evaluation operator
-5. Review metrics and confusion matrix
-6. Explore TP/FP/FN examples in App
-
-### FiftyOne Find Duplicates (`fiftyone-find-duplicates/`)
-
-**When to use:** User wants to find duplicate images, remove redundant samples, find similar images, or deduplicate a dataset.
-
-**Instructions:** Load the skill file at `skills/fiftyone-find-duplicates/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/brain` plugin must be installed
-- FiftyOne App must be launched before using brain operators
-
-**Workflow summary:**
-1. Set context with dataset name
-2. Launch FiftyOne App
-3. Compute similarity embeddings
-4. Find duplicates with threshold
-5. Review and delete duplicates
-6. Close app
-
-### FiftyOne Dataset Inference (`fiftyone-dataset-inference/`)
-
-**When to use:** User wants to load images/videos from a directory, import labeled datasets (COCO, YOLO, VOC), or run model inference on media files.
-
-**Instructions:** Load the skill file at `skills/fiftyone-dataset-inference/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/io` plugin for importing data
-- `@voxel51/zoo` plugin for model inference
-- `@voxel51/utils` plugin for dataset management
-
-**Workflow summary:**
-1. Explore directory to detect media and labels
-2. Confirm findings with user
-3. Create dataset and set context
-4. Import samples (media only or with labels)
-5. Validate import count
-6. Launch App and run inference
-7. View results and close app
-
-### FiftyOne Embeddings Visualization (`fiftyone-embeddings-visualization/`)
-
-**When to use:** User wants to visualize dataset in 2D, find clusters, identify outliers, color by class, explore embedding space, or understand data distribution.
-
-**Instructions:** Load the skill file at `skills/fiftyone-embeddings-visualization/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/brain` plugin must be installed
-- FiftyOne App must be launched before using brain operators
-
-**Workflow summary:**
-1. Set context with dataset name
-2. Launch FiftyOne App
-3. Compute embeddings (CLIP, DINOv2, etc.)
-4. Compute 2D visualization (UMAP/t-SNE)
-5. View in App Embeddings panel
-6. Color by field, find outliers, explore clusters
-7. Close app
-
-### FiftyOne Develop Plugin (`fiftyone-develop-plugin/`)
-
-**When to use:** User wants to create, build, or develop a new FiftyOne plugin (operator or panel), extend FiftyOne with custom functionality, or integrate external APIs/services.
-
-**Instructions:** Load the skill file at `skills/fiftyone-develop-plugin/SKILL.md`
-
-**Key requirements:**
-- FiftyOne installed
-- Python 3.8+ for Python plugins
-- Node.js 16+ for JavaScript panels (optional)
-- FiftyOne MCP server for testing
-
-**Workflow summary:**
-1. Gather requirements (purpose, type, inputs/outputs)
-2. Search existing plugins for patterns
-3. Design and plan the plugin structure
-4. Generate code (fiftyone.yml, __init__.py, etc.)
-5. Install plugin locally for testing
-6. Iterate based on user feedback
-
-**Reference files:**
-- `PLUGIN-STRUCTURE.md` - Directory layout and fiftyone.yml
-- `PYTHON-OPERATOR.md` - Python operator development
-- `PYTHON-PANEL.md` - Python panel development
-- `JAVASCRIPT-PANEL.md` - JavaScript/React panel development
-
-### FiftyOne Zoo Remote Model (`fiftyone-zoo-remote-model/`)
-
-**When to use:** User wants to integrate a model into FiftyOne's remote model zoo (detection, classification, segmentation, embedding, keypoint, or VLM), or debug zoo registration, manifest issues, or DataLoader pickle errors.
-
-**Instructions:** Load the skill file at `skills/fiftyone-zoo-remote-model/SKILL.md`
-
-**Key requirements:**
-- FiftyOne installed
-- Model framework (`torch`, `transformers`, etc.)
-
-**Workflow summary:**
-1. Phase 0 — Confirm integration surface
-2. Phase 1 — Scaffold from `template/`
-3. Phase 2 — Implement (class hierarchy, predict dispatch, label types, DataLoader)
-4. Phase 3 — Validate (manifest, imports, label return, multi-worker on macOS)
-
-**Reference files:**
-- `MANIFEST.md` - Manifest schema and entry points
-- `MODEL-CLASS.md` - Class hierarchy and predict dispatch
-- `DATALOADER.md` - Worker pickle constraints
-- `LABEL-TYPES.md` - Return types and coordinates
-- `DEBUGGING-PRINCIPLES.md` - Six universal principles
-- `VLM-PATTERNS.md` - VLM-specific patterns
-
-### FiftyOne Code Style (`fiftyone-code-style/`)
-
-**When to use:** User wants to write Python code following FiftyOne conventions, contribute to FiftyOne, or ensure code matches FiftyOne's style.
-
-**Instructions:** Load the skill file at `skills/fiftyone-code-style/SKILL.md`
-
-**Key patterns:**
-- Module structure (docstring → imports → logger → public → private)
-- Import organization (4 groups, FiftyOne aliases: fol, fou, etc.)
-- Google-style docstrings with Args/Returns/Raises
-- Lazy imports with `fou.lazy_import()`
-- Guard patterns with `hasattr()`
-- Error handling with `logger.warning()`
-
-### FiftyOne VOODO Design (`fiftyone-voodo-design/`)
-
-**When to use:** User wants to build FiftyOne UIs with React components, style JavaScript panels, use design tokens, or create consistent FiftyOne App interfaces.
-
-**Instructions:** Load the skill file at `skills/fiftyone-voodo-design/SKILL.md`
-
-**Key requirements:**
-- Node.js 16+ for JavaScript panels
-- `@voxel51/voodo` npm package, 2.1.0 or later
-
-**Workflow summary:**
-1. Look up components and token values with `npx @voxel51/voodo list` / `docs <Name>` / `tokens <Group>` in the consuming project
-2. Pass token props as plain strings (`size="sm"`, `variant="primary"`)
-3. Follow composition patterns (FormField wraps controls, Stack for layout, `Text` role variants for type)
-4. Build panel following FiftyOne patterns (dark theme by default; check light mode too)
-
-**Documentation sources:**
-- `npx @voxel51/voodo docs <Name>` (props, docs, and token values for the installed version)
-- Source repo: `https://github.com/voxel51/design-system`
-- Interactive Storybook: `https://voodo.dev.fiftyone.ai/`
-
-### FiftyOne Create Notebook (`fiftyone-create-notebook/`)
-
-**When to use:** User wants to create a Jupyter notebook for a FiftyOne workflow, write a tutorial, build a getting-started guide, create a recipe, generate a demo, or document a complete ML pipeline.
-
-**Instructions:** Load the skill file at `skills/fiftyone-create-notebook/SKILL.md`
-
-**Key requirements:**
-- FiftyOne installed
-- NotebookEdit tool available (built-in to Claude Code)
-- No MCP server required (generates Python SDK code, not MCP operations)
-
-**Workflow summary:**
-1. Determine notebook type (getting-started, tutorial, recipe, full pipeline)
-2. Gather requirements (domain, data source, pipeline stages)
-3. Fetch current FiftyOne API from `https://docs.voxel51.com/llms.txt`
-4. Draft and present notebook outline for user approval
-5. Create empty `.ipynb` file with Write tool
-6. Build cells sequentially with NotebookEdit insert mode
-7. Verify notebook structure by reading it back
-
-**Reference files:**
-- `NOTEBOOK-STRUCTURE.md` - Cell structure patterns and code references
-- `GETTING-STARTED-TEMPLATES.md` - Beginner end-to-end templates
-- `TUTORIAL-TEMPLATES.md` - Intermediate deep-dive templates
-- `RECIPE-TEMPLATES.md` - Quick practical recipe templates
-
-### FiftyOne Dataset Curation (`fiftyone-dataset-curation/`)
-
-**When to use:** User wants to curate a dataset, check data quality, audit annotations, analyze class distributions, explore the embedding space, find duplicates, create curated subsets, build train/val/test splits, or ask natural language questions about a dataset.
-
-**Instructions:** Load the skill file at `skills/fiftyone-dataset-curation/SKILL.md`
-
-**Key requirements:**
-- FiftyOne MCP server must be running
-- `@voxel51/brain` plugin for brain operations
-- `@voxel51/utils` plugin for metadata and quality ops
-- `@voxel51/evaluation` plugin for annotation audit (mistakenness)
-- FiftyOne App must be launched before brain operators
-
-**Workflow summary (8 phases, any can be run individually):**
-1. Dataset loading (optional — delegates to fiftyone-dataset-import)
-2. Dataset inspection (schema, fields, counts)
-3. Data quality audit (metadata, corruption, resolution, aspect ratio)
-4. Near-duplicate detection (delegates to fiftyone-find-duplicates)
-5. Class distribution and imbalance analysis
-6. Embedding exploration and gap detection (delegates to fiftyone-embeddings-visualization)
-7. Annotation audit (mistakenness, hardness, IoU dedup)
-8. Curated subset creation and train/val/test splits
-
-**Reference files:**
-- `QUALITY-CHECKS.md` - Image quality filtering details
-- `ANNOTATION-AUDIT.md` - Annotation error detection
-- `SUBSET-CREATION.md` - Subset and split workflows
-
-**Related skills:**
-- `fiftyone-dataset-import` (Phase 0 data loading)
-- `fiftyone-find-duplicates` (Phase 3 deduplication)
-- `fiftyone-embeddings-visualization` (Phase 5 exploration)
-- `fiftyone-dataset-inference` (required prereq for Phase 6 annotation audit)
-
-### FiftyOne Troubleshoot (`fiftyone-troubleshoot/`)
-
-**When to use:** User encounters a recurring FiftyOne problem: dataset disappeared, App won't open, changes not saving, MongoDB errors, video codec failures, notebook connectivity issues, missing plugins, or any common pain point.
-
-**Instructions:** Load the skill file at `skills/fiftyone-troubleshoot/SKILL.md`
-
-**CRITICAL safety rules enforced by this skill (except when user gives explicit direction):**
-- NEVER delete a dataset without explicit user confirmation
-- NEVER directly manipulate MongoDB (no pymongo, no `db.drop_collection`, no raw shell commands)
-- NEVER modify FiftyOne config files silently
-
-**Issue Index - categories covered:**
-- Dataset persistence (`persistent = True`)
-- App connection (`session.wait()`, Windows guard, port conflicts)
-- Unsaved changes (`sample.save()`, `dataset.save()`, `set_values()`)
-- Video codecs (`reencode_videos()`)
-- macOS open files limit (`ulimit -n 65536`)
-- Notebook / remote App (`proxy_url`, SSH forwarding)
-- MongoDB startup failures (disk space, process restart)
-- Missing plugins / operators (`download_plugin`, `enable_plugin`)
-- Delegated operator executor errors (launch App first)
-- Performance (views, `set_values`, indexes, batching)
-
-**Workflow summary:**
-1. Run diagnostic quick-check (version, datasets, fields, plugins)
-2. Match symptoms to the issue index table in the skill
-3. Explain the cause and proposed fix before applying
-4. Apply fix and verify resolution
-5. Add new issues to the skill as they are encountered
-6. Verify environment status by running a diagnostic check
-
-### FiftyOne Eval Plugin (`fiftyone-eval-plugin/`)
-
-**When to use:** User wants to evaluate a FiftyOne plugin for quality, security, or agent-readiness. Also use when reviewing a community plugin before installation, auditing an existing plugin, or validating a plugin you just built with the develop-plugin skill.
-
-**Instructions:** Load the skill file at `skills/fiftyone-eval-plugin/SKILL.md`
-
-**Key requirements:**
-- FiftyOne installed
-- FiftyOne MCP server for registration and schema checks
-- Access to the plugin source code (local directory)
-
-**Workflow summary (7 phases):**
-1. Manifest & Structure — Validate `fiftyone.yml` completeness and file structure
-2. Security & Trust — Scan for dangerous patterns (filesystem access, network calls, command execution, env var harvesting, data exfiltration)
-3. Registration & MCP — Verify operators register and are exposed as MCP tools
-4. Schema & Contract — Check input/output schemas, error handling, validation boundaries
-5. Risk Classification — Verify destructive operations are correctly classified as HIGH risk
-6. Code Quality — Check FiftyOne conventions, store key scoping, execution patterns
-7. Agent Discoverability — Evaluate tool names and descriptions for LLM usability
-
-**Output:** Structured report with overall score (0-100), security assessment (PASS/WARN/FAIL), per-area scores, critical issues, warnings, and actionable recommendations.
-
-**Security weight:** 30% of overall score. FiftyOne plugins run unsandboxed with full filesystem, network, and subprocess access. This skill is the first line of defense for community plugins.
-
-**Related skills:**
-- `fiftyone-develop-plugin` (for fixing code quality issues found by eval)
-- `fiftyone-code-style` (for fixing style issues found by eval)
-
-### FiftyOne Generate Data Lens Connector (`fiftyone-generate-data-lens-connector/`)
-
-**When to use:** User has an external database schema and wants to generate a Data Lens connector, connect an external data source (PostgreSQL, BigQuery, Databricks, MySQL, SQLite, etc.) to FiftyOne Data Lens, or build a plugin that lets users browse and import data from their database through the FiftyOne App.
-
-**Instructions:** Load the skill file at `skills/fiftyone-generate-data-lens-connector/SKILL.md`
-
-**Note:** Data Lens is a FiftyOne Enterprise feature. The skill will notify OSS users before proceeding.
-
-**Key requirements:**
-- FiftyOne Enterprise deployment (Data Lens is enterprise-only)
-- Database schema (DDL, column list, or live introspection)
-- Database driver package for the target database
-
-**Workflow summary:**
-1. Understand the schema (accept DDL, column lists, or introspection output)
-2. Identify key columns (filepath, labels, metadata, coordinates)
-3. Propose field mapping table for user approval
-4. Generate connector plugin (`__init__.py`, `fiftyone.yml`, `requirements.txt`)
-5. Validate (syntax check, sample construction, code walkthrough)
-6. Iterate on feedback (filters, coordinate normalization, NULLs)
-
-**Reference files:**
-- `CONNECTOR-TEMPLATE.md` - Annotated connector code template with adaptation checklist
-- `FIELD-MAPPING-GUIDE.md` - Database type to FiftyOne field type mapping rules
-
-### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
-
-**When to use:** User wants to triage GitHub issues, validate if bugs are fixed, categorize issue status, or generate standardized response messages.
-
-**Instructions:** Load the skill file at `skills/fiftyone-issue-triage/SKILL.md`
-
-**Triage categories:**
-- Already Fixed - resolved in recent commits
-- Won't Fix - by design or out of scope
-- Not Reproducible - cannot reproduce with provided info
-- No Longer Relevant - outdated version or stale
-- Still Valid - confirmed bug or valid feature request
-
-**Workflow summary:**
-1. Read issue details and extract key info
-2. Search codebase for related code
-3. Check git history for fixes
-4. Search closed issues/PRs for duplicates
-5. Categorize and generate response
+<!-- BEGIN GENERATED SKILLS: do not edit, run `python scripts/generate_agents.py` -->
 
 ### FiftyOne App Playwright (`fiftyone-app-playwright/`)
 
-**When to use:** User wants to drive the FiftyOne App via the Playwright MCP — verify a plugin/operator end-to-end, record a demo or screencast, automate any UI flow against `fo.launch_app(...)`, or debug a session that silently dies after a UI action (the `browser_navigate`-after-`reload_dataset` crash).
+Use when driving the FiftyOne App via the Playwright MCP — plugin/operator verification, demo or screencast recording, or any end-to-end UI automation against `fo.launch_app(...)`. Covers the critical "do not navigate after reload_dataset" crash, launcher patterns (remote=True, trigger-file IPC), MUI-specific input/dropdown gotchas, sidebar tag filtering, `data-cy` selectors, dialog scrolling, session refresh strategies, and cleanup. Trigger on mentions of "Playwright + FiftyOne", "automate FiftyOne App", "operator demo", "browser_navigate crash", "reload_dataset", or any FiftyOne session that silently dies after a UI action.
+
+**Compatibility:** Requires the Playwright MCP server and a Python environment with `fiftyone` installed (drives a live `fo.launch_app(...)` session).
 
 **Instructions:** Load the skill file at `skills/fiftyone-app-playwright/SKILL.md`
 
-**Key requirements:**
-- FiftyOne installed
-- Playwright MCP server connected to the agent
-- A live `fo.launch_app(..., remote=True)` session
+### FiftyOne Code Style (`fiftyone-code-style/`)
 
-**Workflow summary:**
-1. Launch the App detached with the bundled `scripts/launch_app.py` (trigger-file refresh loop, non-persistent clone with a safe pre-delete guard)
-2. Connect Playwright to `http://localhost:<port>`; never `browser_navigate` / `location.reload()` after an operator calls `reload_dataset`
-3. Drive the React/MUI UI with `data-cy` selectors, controlled-input setters, and real clicks for comboboxes
-4. Refresh after mutations via the trigger file or the `reload_dataset` palette operator
-5. Clean up: kill the launcher, drop the non-persistent clone, remove only recent scoped output files
+Writes Python code following FiftyOne's official conventions. Use when contributing to FiftyOne, developing plugins, or writing code that integrates with FiftyOne's codebase.
 
-**Bundled scripts:**
-- `scripts/launch_app.py` — parameterized launcher implementing the trigger-file refresh loop
+**Instructions:** Load the skill file at `skills/fiftyone-code-style/SKILL.md`
+
+### FiftyOne Create Notebook (`fiftyone-create-notebook/`)
+
+Creates Jupyter notebooks for FiftyOne workflows including getting-started guides, tutorials, recipes, and full ML pipelines. Use when creating notebooks, writing tutorials, building demos, or generating FiftyOne walkthroughs covering data loading, exploration, inference, evaluation, and export.
+
+**Instructions:** Load the skill file at `skills/fiftyone-create-notebook/SKILL.md`
+
+### FiftyOne Dataset Curation (`fiftyone-dataset-curation/`)
+
+End-to-end dataset curation for FiftyOne: inspect schema and quality, audit annotations, analyze class distributions, explore embeddings, find duplicates, create curated subsets, and build train/val/test splits. Works with any computer vision dataset type.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-curation/SKILL.md`
+
+### FiftyOne Dataset Export (`fiftyone-dataset-export/`)
+
+Exports FiftyOne datasets to standard formats (COCO, YOLO, VOC, CVAT, CSV, etc.) and Hugging Face Hub. Use when converting datasets, exporting for training, creating archives, sharing data in specific formats, or publishing datasets to Hugging Face.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-export/SKILL.md`
+
+### FiftyOne Dataset Import (`fiftyone-dataset-import/`)
+
+Imports datasets into FiftyOne with automatic format detection. Supports all media types (images, videos, point clouds, MCAP multimodal recordings), label formats (COCO, YOLO, VOC, KITTI), multimodal grouped datasets, LeRobot v3 robot-learning episode datasets, and Hugging Face Hub datasets. Use when importing datasets from local files or Hugging Face, loading autonomous driving data, importing robotics/AV sensor logs (MCAP, ROS bag), importing LeRobot robot-learning episodes (teleop recordings, observation.state/action data), or creating grouped datasets.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-import/SKILL.md`
+
+### FiftyOne Dataset Inference (`fiftyone-dataset-inference/`)
+
+Run ML model inference on FiftyOne datasets. Use when running models for detection, classification, segmentation, or embeddings. Discovers available models dynamically from the Zoo, plugin operators, or custom sources — never assumes a fixed model list.
+
+**Instructions:** Load the skill file at `skills/fiftyone-dataset-inference/SKILL.md`
+
+### FiftyOne Develop Plugin (`fiftyone-develop-plugin/`)
+
+Develops custom FiftyOne plugins (operators and panels) from scratch. Use when creating plugins, extending FiftyOne with custom operators, building interactive panels, or integrating external APIs.
+
+**Instructions:** Load the skill file at `skills/fiftyone-develop-plugin/SKILL.md`
+
+### FiftyOne Embeddings Visualization (`fiftyone-embeddings-visualization/`)
+
+Visualizes datasets in 2D using embeddings with UMAP or t-SNE dimensionality reduction. Use when exploring dataset structure, finding clusters, identifying outliers, or understanding data distribution.
+
+**Instructions:** Load the skill file at `skills/fiftyone-embeddings-visualization/SKILL.md`
+
+### FiftyOne Eval Plugin (`fiftyone-eval-plugin/`)
+
+Evaluates FiftyOne plugins for quality, security, and agent-readiness. Use when reviewing a plugin before installation, auditing an existing plugin, validating a plugin you just built, or assessing community plugins for safety. Produces a structured report with scores and actionable recommendations.
+
+**Instructions:** Load the skill file at `skills/fiftyone-eval-plugin/SKILL.md`
+
+### FiftyOne Find Duplicates (`fiftyone-find-duplicates/`)
+
+Finds duplicate or near-duplicate images in FiftyOne datasets using brain similarity computation. Use when deduplicating datasets, finding similar images, or removing redundant samples.
+
+**Instructions:** Load the skill file at `skills/fiftyone-find-duplicates/SKILL.md`
+
+### FiftyOne Generate Data Lens Connector (`fiftyone-generate-data-lens-connector/`)
+
+Generate a Data Lens connector from an external database schema. Use when users want to connect an external data source (PostgreSQL, BigQuery, Databricks, MySQL, etc.) to FiftyOne Data Lens, or when they have a database schema and want to browse/import that data through the FiftyOne App.
+
+**Instructions:** Load the skill file at `skills/fiftyone-generate-data-lens-connector/SKILL.md`
+
+### FiftyOne Issue Triage (`fiftyone-issue-triage/`)
+
+Triages FiftyOne GitHub issues by categorizing as fixed, won't fix, not reproducible, or still valid. Use when reviewing GitHub issues, triaging bugs, or closing stale issues in the voxel51/fiftyone repository.
+
+**Instructions:** Load the skill file at `skills/fiftyone-issue-triage/SKILL.md`
+
+### FiftyOne Model Evaluation (`fiftyone-model-evaluation/`)
+
+Evaluate model predictions against ground truth using COCO, Open Images, or custom protocols. Use when computing mAP, precision, recall, confusion matrices, or analyzing TP/FP/FN examples for detection, classification, segmentation, or regression tasks.
+
+**Instructions:** Load the skill file at `skills/fiftyone-model-evaluation/SKILL.md`
 
 ### FiftyOne SDK Guidance (`fiftyone-sdk-guidance/`)
 
-**When to use:** User asks how to do something in the FiftyOne Python SDK, asks a docs question, or no operator/skill exists for their goal.
+Answers FiftyOne Python SDK questions with accurate, runnable code. Use when the user asks how to do something in the FiftyOne Python SDK, asks a docs question, no skill or operator covers their goal, or the agent is unsure of the correct FiftyOne method, argument, or field path while writing code — e.g. "how do I do X in Python", "show me the SDK for filtering", "there's no operator for this, can I do it in code", "what's the API for embeddings", "write me a Python script to do Y".
 
 **Instructions:** Load the skill file at `skills/fiftyone-sdk-guidance/SKILL.md`
 
-**Key requirements:**
-- *(Optional)* Kapa.ai MCP server connected to the agent, Voxel51's public docs bot at `https://voxel51.mcp.kapa.ai`, OAuth login with your own Google/GitHub account, no API key
-- Falls back to training knowledge if not connected
-- On Claude Code, the skill offers to connect it automatically (`claude mcp add`) the first time it's needed, pending user confirmation; no manual pre-install step required
+### FiftyOne Troubleshoot (`fiftyone-troubleshoot/`)
 
-**Workflow summary:**
-1. Understand the user's SDK goal (direct question or operator fallback)
-2. Search live docs with `search_fifty_one_knowledge_sources`, refining the query if needed
-3. Build a runnable Python code example from the search results
-4. Explain the 1–2 most important methods used
-5. Offer follow-up options
+Diagnose and fix common FiftyOne issues automatically. Use when a dataset disappeared, the App won't open, changes aren't saving, MongoDB errors occur, video codecs fail, notebook connectivity breaks, operators are missing, or any recurring FiftyOne pain point needs solving.
+
+**Instructions:** Load the skill file at `skills/fiftyone-troubleshoot/SKILL.md`
+
+### FiftyOne VOODO Design (`fiftyone-voodo-design/`)
+
+Build FiftyOne UIs using VOODO (@voxel51/voodo), the official React component library. Use when building plugin panels, creating interactive UIs, styling FiftyOne applications, or choosing components, text sizes, colors, and spacing. Looks up the installed version's components and token values with `npx @voxel51/voodo` before writing code.
+
+**Instructions:** Load the skill file at `skills/fiftyone-voodo-design/SKILL.md`
+
+### FiftyOne Zoo Remote Model (`fiftyone-zoo-remote-model/`)
+
+Use when integrating a model into FiftyOne's remote model zoo — detection, classification, segmentation, embedding, keypoint, or vision-language (VLM) models loaded via `register_zoo_model_source` and `load_zoo_model`, then applied with `dataset.apply_model`. Also for debugging zoo registration, `manifest.json` issues, custom `fom.Model` / `TorchModelMixin` subclasses, DataLoader pickle errors, or worker `ModuleNotFoundError` from spawned DataLoader workers.
+
+**Instructions:** Load the skill file at `skills/fiftyone-zoo-remote-model/SKILL.md`
+
+<!-- END GENERATED SKILLS -->
 
 ## Prerequisites
 

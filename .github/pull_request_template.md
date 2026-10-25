@@ -22,7 +22,7 @@
 - [ ] Key Directives section is present (ALWAYS/NEVER rules)
 - [ ] Complete Workflow section with code examples at each step
 - [ ] Troubleshooting section covers common failure modes
-- [ ] `AGENTS.md` updated with the skill entry
+- [ ] `AGENTS.md` regenerated with `python scripts/generate_agents.py`
 - [ ] Tested end-to-end with at least one AI assistant
 - [ ] `node scripts/validate-template.mjs` passes
 

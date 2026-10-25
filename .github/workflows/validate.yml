@@ -19,3 +19,22 @@ jobs:
 
       - name: Run template validator
         run: node scripts/validate-template.mjs
+
+  agents-md:
+    name: Check AGENTS.md is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run generator tests
+        run: python -m unittest discover -s scripts/tests -v
+
+      - name: Check AGENTS.md
+        run: python scripts/generate_agents.py --check
