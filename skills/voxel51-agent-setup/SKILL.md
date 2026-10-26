@@ -1,13 +1,13 @@
 ---
 name: voxel51-agent-setup
-description: Connect a local AI agent (Claude Code, Cursor, or any MCP client) or the fiftyone CLI directly to a Voxel51 deployment, authenticating as yourself with your own account permissions. Use when a user wants to link their coding agent to a Voxel51 deployment, run FiftyOne operators from outside the App, pair a device with fiftyone agent login, or asks about remote/API access to a Voxel51 deployment.
+description: Connect a local AI agent (Claude Code, Cursor, or any MCP client) directly to a Voxel51 deployment over MCP, authenticating as yourself with your own account permissions. Use when a user wants to link their coding agent to a Voxel51 deployment, run FiftyOne operators from outside the App, or asks about remote/MCP access to a Voxel51 deployment.
 ---
 
 # Set Up an Agent for Voxel51
 
-Pair a local agent (Claude Code, Cursor, any MCP-compliant client) or the `fiftyone`
-CLI to a Voxel51 deployment. Once paired, the agent acts as the approving
-user, with exactly that user's own role and dataset permissions, no separate service
+Pair a local agent (Claude Code, Cursor, any MCP-compliant client) to a Voxel51
+deployment over MCP. Once paired, the agent acts as the approving user, with
+exactly that user's own role and dataset permissions, no separate service
 account or shared credential involved.
 
 ## Voxel51 Notice
@@ -36,26 +36,23 @@ against a local FiftyOne install without any of the steps below.
 2. **Always use the user's own deployment URLs.** Never invent, assume, or reuse a
    URL from an example, docs page, or a different deployment. Ask for them if not
    given.
-3. **Never ask the user to paste, type, or store an access token by hand.** Both
-   connection paths below handle credential storage automatically and safely
-   (`~/.fiftyone/agent.json`, file mode `0600`, for the CLI path). If you find
-   yourself about to ask for a raw key or token, stop, that's the wrong step.
-4. **A one-time browser approval is required and cannot be skipped.** Both the CLI's
-   device-flow login and an MCP client's OAuth connection need a human to sign in and
-   click Approve in a browser. Tell the user to expect this, then wait for it, don't
-   suggest a way around it.
+3. **Never ask the user to paste, type, or store an access token by hand.** The
+   MCP connection flow below handles credential storage automatically and safely.
+   If you find yourself about to ask for a raw key or token, stop, that's the
+   wrong step.
+4. **A one-time browser approval is required and cannot be skipped.** An MCP
+   client's OAuth connection needs a human to sign in and click Approve in a
+   browser. Tell the user to expect this, then wait for it, don't suggest a way
+   around it.
 5. **Treat a permission refusal as expected behavior, not a bug.** If an operator is
    missing from the list, or a pairing attempt is refused because the approving user
    lacks a specific permission, that's the live permission check working correctly,
    see Troubleshooting. Never suggest disabling, bypassing, or "working around" a
    refusal.
-6. **Prefer MCP for editor-native agents** (Claude Code, Cursor, any MCP client) and
-   **the CLI for scripts or headless shells.** Both reach the same operators with the
-   same permissions; the choice is about the environment, not the capability.
-7. **New MCP servers only attach on the next session.** After adding one, tell the
+6. **New MCP servers only attach on the next session.** After adding one, tell the
    user plainly they need to restart their agent (or start a fresh conversation)
    before the tools are usable; it will not work in the current turn.
-8. **Consult `references/` before guessing at an operator or its arguments.** Don't
+7. **Consult `references/` before guessing at an operator or its arguments.** Don't
    invent an operator URI or parameter shape from general FiftyOne knowledge or a
    past conversation — different deployments have different plugins installed and
    different schemas. Read the matching category file under `references/` first,
@@ -68,18 +65,11 @@ against a local FiftyOne install without any of the steps below.
 - The deployment's gateway URL. On **Voxel51 Cloud**, the host is always
   `app.voxel51.com`, no need to ask. On a **self-hosted** deployment, ask the
   user or their FiftyOne admin for the hostname, don't guess it. Either way
-  the path suffixes are fixed: for MCP,
-  `https://<host>/api/proxy/fiftyone-teams/mcp`; for the CLI, an API base URL,
-  `https://<host>/api/proxy/fiftyone-teams`, and an auth base URL,
-  `https://<host>/cas/api`.
-- To use the CLI path: a `fiftyone` install that includes the `agent` command group
-  (`fiftyone agent --help` should list `login`, `status`, `logout`, `operators`).
-- To use the MCP path: an MCP client that supports remote HTTP servers with OAuth
-  (Claude Code, Cursor, and similar all do).
+  the path suffix is fixed: `https://<host>/api/proxy/fiftyone-teams/mcp`.
+- An MCP client that supports remote HTTP servers with OAuth (Claude Code,
+  Cursor, and similar all do).
 
 ## Workflow
-
-### Path A: Connect via MCP (Claude Code, Cursor, any MCP client)
 
 1. Ask which they're on: Voxel51 Cloud (host is `app.voxel51.com`) or
    self-hosted (ask for their deployment's hostname). The gateway URL is
@@ -107,9 +97,8 @@ against a local FiftyOne install without any of the steps below.
    }
    ```
    If the client's config format has no explicit way to pin a client id and it
-   fails the same DCR error above, that client isn't yet supported for this path;
-   fall back to the CLI (Path B) instead.
-3. Tell the user to restart their agent (per Key Directive 7), then trigger the
+   fails the same DCR error above, that client isn't yet supported for this path.
+3. Tell the user to restart their agent (per Key Directive 6), then trigger the
    connection (e.g. by trying to use one of the new tools). Their agent will open a
    browser for a one-time OAuth consent screen, they sign in and approve, and the
    connection is complete, no API key needed.
@@ -120,34 +109,12 @@ against a local FiftyOne install without any of the steps below.
    `execute_operator(..., delegate=True)`; check the result's `delegated` field (not every
    operator supports it) and poll `get_delegated_operation` for the outcome.
 
-### Path B: Connect via the `fiftyone` CLI
-
-1. Ask the user for their deployment's API base URL and auth base URL if not already
-   given.
-2. Run the login flow:
-   ```
-   fiftyone agent login --api-url https://<your-deployment>/api/proxy/fiftyone-teams --auth-url https://<your-deployment>/cas/api
-   ```
-3. This prints a short code and a URL. Tell the user to open the URL in a browser
-   (already signed in to their FiftyOne account) and approve the pairing there. The
-   command waits and prints "Connected" once approved.
-4. From then on:
-   - `fiftyone agent status` — show what's paired and its scope/expiry.
-   - `fiftyone agent operators list` (add `--json` for machine-readable output) —
-     list operators the paired account can currently run.
-   - `fiftyone agent operators run <uri> --params '{"key": "value"}'` — run one. Add
-     `--delegate` for long-running operators; check the printed `delegated` value (not
-     every operator supports it) and follow up with `status` below.
-   - `fiftyone agent operators status <operation-id>` — check on a delegated run.
-   - `fiftyone agent operators list-delegated` — list your own delegated operations.
-   - `fiftyone agent logout` — remove the stored credential from this machine.
-
 ## Using the tools well
 
-The MCP path's five tools (`list_operators`, `get_operator_schema`, `execute_operator`,
-`list_delegated_operations`, `get_delegated_operation`) and the CLI's `agent operators`
-commands are generic — they reach whatever FiftyOne operator you name. The operator
-catalog behind them is large (typically hundreds, varying by deployment and the
+The five MCP tools (`list_operators`, `get_operator_schema`, `execute_operator`,
+`list_delegated_operations`, `get_delegated_operation`) are generic — they reach
+whatever FiftyOne operator you name. The operator catalog behind them is large
+(typically hundreds, varying by deployment and the
 connected user's own permissions), and most individual operators carry no written
 description of their own. Don't call `list_operators` cold and scan every name, and
 don't guess at an operator's purpose or arguments from memory.
@@ -186,15 +153,13 @@ Instead:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `Incompatible auth server: does not support dynamic client registration` when adding or logging in to the MCP server | The MCP client tried to self-register a client id; this deployment's auth server doesn't support that | Remove and re-add the server with an explicit `--client-id voxel51-agent-mcp` (see Path A step 2) |
-| `NotPairedError` on any `agent operators` command | Never logged in on this machine, or logged out | Run `fiftyone agent login` first |
+| `Incompatible auth server: does not support dynamic client registration` when adding the MCP server | The MCP client tried to self-register a client id; this deployment's auth server doesn't support that | Remove and re-add the server with an explicit `--client-id voxel51-agent-mcp` (see Workflow step 2) |
 | Pairing approval is refused, mentions a missing permission | The signed-in user approving the pairing doesn't have the `USE_API_KEYS` permission on their account | Ask a FiftyOne admin to grant that permission to the user's account, this is intentional, not a bug |
-| An operator you expect isn't in `list_operators` / `agent operators list` | The connected account's current role or dataset permissions don't allow it | Working as intended, permissions are re-checked live on every call, not cached. Confirm with the account's admin what it should have access to |
-| Everything worked, then started failing after a while with an auth error | The access token (short-lived, ~1 hour) expired and the automatic refresh also failed, most likely the pairing was revoked | Re-run `fiftyone agent login`, or reconnect the MCP server |
-| MCP tools don't appear right after adding the server | New MCP servers only attach on the next session (Key Directive 7) | Restart the agent / start a fresh conversation |
+| An operator you expect isn't in `list_operators` | The connected account's current role or dataset permissions don't allow it | Working as intended, permissions are re-checked live on every call, not cached. Confirm with the account's admin what it should have access to |
+| Everything worked, then started failing after a while with an auth error | The access token (short-lived, ~1 hour) expired and the automatic refresh also failed, most likely the pairing was revoked | Reconnect the MCP server |
+| MCP tools don't appear right after adding the server | New MCP servers only attach on the next session (Key Directive 6) | Restart the agent / start a fresh conversation |
 | User is on OSS FiftyOne, not Voxel51 | This whole feature is Voxel51-only | Point them at the local `fiftyone-mcp` server instead, which needs no pairing |
 
 ## Resources
 
 - [Voxel51 documentation](https://docs.voxel51.com/enterprise/index.html)
-- [FiftyOne CLI documentation](https://docs.voxel51.com/cli/index.html)
