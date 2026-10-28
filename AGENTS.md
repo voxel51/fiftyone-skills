@@ -116,6 +116,12 @@ Use when integrating a model into FiftyOne's remote model zoo — detection, cla
 
 **Instructions:** Load the skill file at `skills/fiftyone-zoo-remote-model/SKILL.md`
 
+### Voxel51 Agent Setup (`voxel51-agent-setup/`)
+
+Connect a local AI agent (Claude Code, Cursor, or any MCP client) directly to a Voxel51 deployment over MCP, authenticating as yourself with your own account permissions. Use when a user wants to link their coding agent to a Voxel51 deployment, run FiftyOne operators from outside the App, or asks about remote/MCP access to a Voxel51 deployment.
+
+**Instructions:** Load the skill file at `skills/voxel51-agent-setup/SKILL.md`
+
 <!-- END GENERATED SKILLS -->
 
 ## Prerequisites

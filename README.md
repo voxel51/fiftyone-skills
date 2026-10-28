@@ -60,6 +60,7 @@ Skills bridge the gap between natural language and FiftyOne's 80+ operators, pro
 | 🛡️ [**Eval Plugin**](skills/fiftyone-eval-plugin/SKILL.md) | Evaluate plugins for quality, security, and agent-readiness. Produces a structured report | — |
 | 🧩 [**Zoo Remote Model**](skills/fiftyone-zoo-remote-model/SKILL.md) | Build remote model zoo integrations that work with `register_zoo_model_source` and `dataset.apply_model` | — |
 | 🔌 [**Generate Data Lens Connector**](skills/fiftyone-generate-data-lens-connector/SKILL.md) | Generate a Data Lens connector from an external database schema (PostgreSQL, BigQuery, MySQL, etc.) | — |
+| 🔗 [**Voxel51 Agent Setup**](skills/voxel51-agent-setup/SKILL.md) | Connect a local agent (Claude Code, Cursor, any MCP client) or the `fiftyone` CLI to a Voxel51 deployment with your own account permissions | — |
 | 🎭 [**App Playwright**](skills/fiftyone-app-playwright/SKILL.md) | Drive the FiftyOne App via the Playwright MCP for operator/plugin verification, demos, and end-to-end UI automation | — |
 | 📚 [**SDK Guidance**](skills/fiftyone-sdk-guidance/SKILL.md) | Answer FiftyOne SDK and docs questions with live documentation search, or provide the SDK path when no operator exists | — |
 
