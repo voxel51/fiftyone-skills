@@ -149,6 +149,33 @@ Instead:
    every operator supports it), then follow up per
    [`references/delegated-operations.md`](references/delegated-operations.md).
 
+## Generating Deeplinks
+
+No MCP tool or FiftyOne SDK call builds a shareable App URL — there's no
+`generate_deeplink`, `get_dataset_url`, or similar operator. Build the URL
+string yourself from the deployment's own host (the same `<host>` from
+Prerequisites, not the gateway's `/api/proxy/...` path) plus these
+conventions:
+
+- Dataset: `https://<host>/dataset/<url-encoded-name>`
+- A specific sample: append `/sample/<sample-id>`
+- A specific group (grouped dataset): append `/group/<group-id>`
+- A saved view: `?view=<saved-view-slug>` — only works for views that are
+  already saved (have a slug via `save_view`); there's no way to deep-link an
+  ad-hoc filtered view's raw stages
+- An active group slice: `&slice=<slice-name>`
+- One or more panels open beside Samples: `&panel=<name>` or
+  `&panel=<name1>,<name2>` — this was built specifically for agent-generated
+  links, but the underlying `open_panel` operator is browser-only and not
+  reachable via `execute_operator`; it only works by putting it in the URL
+
+Example, a sample with the Model Evaluation panel open:
+`https://<host>/dataset/my-dataset/sample/<sample-id>?panel=model_evaluation_panel_builtin`
+
+Don't invent other query parameters, and don't offer a `?share=` link — that
+raw-view-stage share param exists in the App's source but isn't wired up to
+anything yet.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
