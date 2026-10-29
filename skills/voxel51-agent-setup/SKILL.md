@@ -17,7 +17,9 @@ This is a **Voxel51** feature. Before proceeding, inform the user:
 > **Note:** Remote agent access is a Voxel51-only capability, and it must
 > be explicitly enabled by the deployment's administrator (it ships behind a feature
 > flag, off by default). If you're using the open-source version of FiftyOne, or a
-> Voxel51 deployment where this hasn't been turned on yet, this won't work.
+> Voxel51 deployment where this hasn't been turned on yet, this won't work. For a
+> **self-hosted (on-premise)** deployment, this must first be enabled by your
+> Voxel51 Customer Success contact, reach out to them to turn it on.
 >
 > Would you like to proceed?
 
@@ -61,7 +63,10 @@ against a local FiftyOne install without any of the steps below.
 
 ## Prerequisites
 
-- A Voxel51 deployment with remote agent access enabled by an admin.
+- A Voxel51 deployment with remote agent access enabled by an admin. On a
+  **self-hosted** deployment, this must first be enabled by the user's Voxel51
+  Customer Success contact, not just a flag their own admin can flip; tell them
+  to reach out to Customer Success if it isn't on yet.
 - The deployment's gateway URL. On **Voxel51 Cloud**, the host is always
   `app.voxel51.com`, no need to ask. On a **self-hosted** deployment, ask the
   user or their FiftyOne admin for the hostname, don't guess it. Either way
@@ -148,6 +153,33 @@ Instead:
    background run instead of blocking; check the response's `delegated` field (not
    every operator supports it), then follow up per
    [`references/delegated-operations.md`](references/delegated-operations.md).
+
+## Generating Deeplinks
+
+No MCP tool or FiftyOne SDK call builds a shareable App URL — there's no
+`generate_deeplink`, `get_dataset_url`, or similar operator. Build the URL
+string yourself from the deployment's own host (the same `<host>` from
+Prerequisites, not the gateway's `/api/proxy/...` path) plus these
+conventions:
+
+- Dataset: `https://<host>/dataset/<url-encoded-name>`
+- A specific sample: append `/sample/<sample-id>`
+- A specific group (grouped dataset): append `/group/<group-id>`
+- A saved view: `?view=<saved-view-slug>` — only works for views that are
+  already saved (have a slug via `save_view`); there's no way to deep-link an
+  ad-hoc filtered view's raw stages
+- An active group slice: `&slice=<slice-name>`
+- One or more panels open beside Samples: `&panel=<name>` or
+  `&panel=<name1>,<name2>` — this was built specifically for agent-generated
+  links, but the underlying `open_panel` operator is browser-only and not
+  reachable via `execute_operator`; it only works by putting it in the URL
+
+Example, a sample with the Model Evaluation panel open:
+`https://<host>/dataset/my-dataset/sample/<sample-id>?panel=model_evaluation_panel_builtin`
+
+Don't invent other query parameters, and don't offer a `?share=` link — that
+raw-view-stage share param exists in the App's source but isn't wired up to
+anything yet.
 
 ## Troubleshooting
 
