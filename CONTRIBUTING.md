@@ -9,7 +9,7 @@ Thank you for your interest in contributing! FiftyOne Skills are packaged workfl
 There are two main ways to contribute:
 
 - **New skill** — Teach an AI assistant a workflow it doesn't know yet
-- **Improve an existing skill** — Fix a bug, improve accuracy, add edge cases, or add supporting reference docs
+- **Improve an existing skill** — Fix a bug, improve accuracy, add edge cases, add an [`EVALS.md`](#evalsmd-format-optional), or add supporting reference docs
 
 Both follow the same workflow below.
 
@@ -120,6 +120,7 @@ Each skill lives in its own directory under `skills/`:
 skills/
 └── fiftyone-my-skill/
     ├── SKILL.md              # Required — instructions for the AI
+    ├── EVALS.md              # Optional: trigger prompts, test cases, known failures
     ├── references/           # Optional — supporting reference docs
     │   └── SOME-GUIDE.md
     └── scripts/              # Optional — example or utility scripts
@@ -156,6 +157,7 @@ The `description` field in the `SKILL.md` YAML frontmatter determines when an AI
 1. **Test with natural user prompts:** Try 3–5 different phrasings of the intended task and verify that the skill loads consistently.
 2. **Test edge cases:** Try related but different requests to confirm that the skill does **not** load when it shouldn't.
 3. **Iterate:** If the skill triggers too often, make the description more specific. If it fails to trigger for valid requests, broaden the wording by adding common user-intent keywords and synonyms.
+4. **Record what you tested:** Save these prompts in the skill's optional [`EVALS.md`](#evalsmd-format-optional) so reviewers and future contributors can rerun them.
 
 ### Required sections
 
@@ -185,6 +187,81 @@ Before submitting, verify your skill:
 - [ ] Troubleshooting covers the most common failure modes
 - [ ] Tested end-to-end with at least one AI assistant
 - [ ] No inclusion of device-specific references or local-only file pointers
+
+### `EVALS.md` format (optional)
+
+An optional `EVALS.md` next to `SKILL.md` records how to check that the skill works: which prompts should load it, what a correct run looks like, and which failures have already happened. It follows the test, measure and refine loop from Anthropic's [skill-creator methodology](https://claude.com/blog/improving-skill-creator-test-measure-and-refine-agent-skills). Rerun it after changing `SKILL.md`, and when FiftyOne, the MCP server or a plugin the skill uses changes.
+
+| Section | What goes in it |
+| ------- | --------------- |
+| **Setup** | What a run needs installed, plus a short script that builds the test dataset. Prefer zoo datasets, and plant known cases (for example, duplicated samples) so results have a known answer. If a test case changes the dataset, say when to rerun the script. |
+| **Trigger Prompts** | At least 3 prompts that should load the skill, phrased the way users talk, and at least 2 near misses that share keywords but belong elsewhere. Name the better fit for each near miss. |
+| **Test Cases** | 2 or 3 realistic prompts run against the setup. Each has an expected result and success criteria a reviewer can confirm from the tool calls or the dataset, such as which operators ran, in what order, and the final sample count. |
+| **Known Failure Modes** | Failures that have actually happened and were fixed: the symptom, the test case that catches a regression, and the PR or issue where it was fixed. |
+
+Write success criteria as checks, not impressions: "ends with 200 samples" rather than "works well". When a run fails in a new way, add a row to Known Failure Modes and a criterion that would have caught it.
+
+Run the test cases in a new session started in an empty folder outside this repo, with the skill installed the way users install it. Inside the repo, the agent can read `SKILL.md` and `EVALS.md` as files instead of loading the skill.
+
+The sections map onto skill-creator's `evals/evals.json` if you want to automate runs: each test case's prompt, expected result and success criteria become `prompt`, `expected_output` and `expectations`, and the trigger prompts become its `{"query", "should_trigger"}` set for description tuning.
+
+See [`skills/fiftyone-find-duplicates/EVALS.md`](skills/fiftyone-find-duplicates/EVALS.md) for a complete example. Template:
+
+````markdown
+# Evals: fiftyone-my-skill
+
+## Setup
+
+Requires FiftyOne, the FiftyOne MCP server and any plugins the skill uses.
+
+Run this before the test cases, and again before any test case that needs the dataset unchanged:
+
+```python
+import fiftyone as fo
+import fiftyone.zoo as foz
+
+dataset = foz.load_zoo_dataset("quickstart").clone("my-skill-eval")
+dataset.persistent = True
+```
+
+## Trigger Prompts
+
+### Should trigger
+
+| ID | Prompt |
+|----|--------|
+| T1 | "..." |
+| T2 | "..." |
+| T3 | "..." |
+
+### Should not trigger
+
+| ID | Prompt | Better fit |
+|----|--------|------------|
+| N1 | "..." | `fiftyone-other-skill` |
+| N2 | "..." | None |
+
+## Test Cases
+
+### TC1: Short name
+
+**Prompt:** "..."
+
+**Expected result:** One or two sentences.
+
+**Success criteria:**
+
+- [ ] ...
+- [ ] ...
+
+## Known Failure Modes
+
+Failures seen before. Each is fixed in `SKILL.md`; the test case listed catches it if it comes back.
+
+| Failure | Symptom | Caught by | Fixed in |
+|---------|---------|-----------|----------|
+| ... | ... | TC1 | [#123](https://github.com/voxel51/fiftyone-skills/pull/123) |
+````
 
 ## Naming Conventions
 
