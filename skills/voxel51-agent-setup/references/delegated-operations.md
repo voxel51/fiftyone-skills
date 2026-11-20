@@ -17,7 +17,9 @@ run executes on a separate executor, independent of the calling session.
   than assuming the run itself failed.
 
 ## Delegated-run metadata (read-only)
-`@voxel51/runs/get_run_info`, `load_run_view`, `rename_run`, `delete_run`
+Call `list_operators(query="run info")` or `query="run view"` for the current
+operators here (e.g. getting a run's info, loading its view, renaming or deleting
+it).
 
 ## What you can't do here yet
 Admin actions on a delegated operation — rerunning it, archiving it, pinning it,

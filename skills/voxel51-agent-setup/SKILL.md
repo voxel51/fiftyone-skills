@@ -54,12 +54,15 @@ against a local FiftyOne install without any of the steps below.
 6. **New MCP servers only attach on the next session.** After adding one, tell the
    user plainly they need to restart their agent (or start a fresh conversation)
    before the tools are usable; it will not work in the current turn.
-7. **Consult `references/` before guessing at an operator or its arguments.** Don't
-   invent an operator URI or parameter shape from general FiftyOne knowledge or a
-   past conversation — different deployments have different plugins installed and
-   different schemas. Read the matching category file under `references/` first,
-   then confirm the exact current arguments with `get_operator_schema` before
-   calling `execute_operator`. See "Using the tools well" below.
+7. **Search before guessing at an operator or its arguments.** Don't invent an
+   operator URI or parameter shape from general FiftyOne knowledge or a past
+   conversation — different deployments have different plugins installed and
+   different schemas. Call `list_operators(query=...)` to find the real,
+   currently-installed candidates (live-permission-filtered, each with its own
+   description), consult the matching `references/` file for operational
+   gotchas a search result won't show you, then confirm the exact current
+   arguments with `get_operator_schema` before calling `execute_operator`. See
+   "Using the tools well" below.
 
 ## Prerequisites
 
@@ -110,7 +113,9 @@ against a local FiftyOne install without any of the steps below.
 4. Once connected, five tools are available: `list_operators`, `get_operator_schema`,
    `execute_operator`, `list_delegated_operations`, `get_delegated_operation` — covering
    whatever FiftyOne operators the approving user's account is permitted to see and run,
-   live-checked on every call. Long-running operators can be run in the background with
+   live-checked on every call. `list_operators(query=...)` narrows the catalog by keyword
+   instead of returning everything, ranked, with each result's description included.
+   Long-running operators can be run in the background with
    `execute_operator(..., delegate=True)`; check the result's `delegated` field (not every
    operator supports it) and poll `get_delegated_operation` for the outcome.
 
@@ -119,15 +124,21 @@ against a local FiftyOne install without any of the steps below.
 The five MCP tools (`list_operators`, `get_operator_schema`, `execute_operator`,
 `list_delegated_operations`, `get_delegated_operation`) are generic — they reach
 whatever FiftyOne operator you name. The operator catalog behind them is large
-(typically hundreds, varying by deployment and the
-connected user's own permissions), and most individual operators carry no written
-description of their own. Don't call `list_operators` cold and scan every name, and
-don't guess at an operator's purpose or arguments from memory.
+(typically hundreds, varying by deployment and the connected user's own
+permissions). If your client supports it, this gateway also sends a short set
+of usage conventions automatically on connection (MCP's `initialize.instructions`)
+— the steps below go further than that, especially the `references/` files.
 
-Instead:
-
-1. **Start from `references/`, not from `list_operators`.** Read the one file that
-   matches the current task:
+1. **Search first: `list_operators(query=...)`.** It's live, permission-filtered,
+   ranked by relevance, and every result includes its own description — e.g.
+   `query="find duplicate images"` or `query="evaluate model"`. For most tasks
+   this alone narrows hundreds of operators down to a handful of real,
+   currently-installed candidates. Many individual operators still have no
+   description written by their author, so a vague query can only rank on
+   name/label — if nothing useful comes back, move to the matching
+   `references/` file below instead of guessing.
+2. **Use `references/` for what a search result can't show you — operational
+   gotchas and multi-step context, not operator inventories:**
    - [`references/datasets-and-samples.md`](references/datasets-and-samples.md) —
      dataset lifecycle, views, fields/schema, sample and label edits, indexes,
      media import, workspaces.
@@ -141,14 +152,9 @@ Instead:
    - [`references/not-available.md`](references/not-available.md) — real,
      commonly-requested things that **aren't** reachable this way today, and why.
      Check this before spending calls discovering it the hard way.
-2. **Treat the reference files as a map, not a schema.** They name real operator URIs
-   and what each is for; they deliberately don't restate exact parameters, because
-   those can differ by deployment, dataset, and plugin version. Always call
-   `get_operator_schema` for the operator you've settled on before calling
-   `execute_operator` with anything beyond no/trivial parameters.
-3. **`list_operators(dataset_name=...)` is live-permission-filtered.** Use it to
-   confirm an operator a reference file names is actually available to this caller
-   on this dataset, not to browse — it returns bare URIs with no description.
+3. **Always confirm with `get_operator_schema` before `execute_operator`.** Neither
+   a search result's description nor a reference file restates exact parameters —
+   those differ by deployment, dataset, and plugin version.
 4. **Delegate long-running work.** `execute_operator(..., delegate=True)` queues a
    background run instead of blocking; check the response's `delegated` field (not
    every operator supports it), then follow up per
