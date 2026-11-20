@@ -7,27 +7,36 @@ experience — only the underlying computation and its results are reachable her
 
 Call `list_operators(query=...)` for the current operator in each area below — it's
 live, permission-filtered, ranked, and includes each result's description. Search
-keywords by area:
+keywords by area (one example operator per area as a starting anchor if search
+turns up nothing):
 
 - **Brain methods** — "compute visualization", "compute similarity", "sort by
   similarity", "compute uniqueness", "compute mistakenness", "compute hardness",
-  "find duplicates", "deduplicate"
-- **Similarity search** — "similarity search", "list similarity runs"
-- **Model evaluation** — "evaluate model", "evaluation info", "evaluation scenario"
+  "find duplicates", "deduplicate" (e.g. `@voxel51/brain/compute_visualization`)
+- **Similarity search** — "similarity search", "list similarity runs" (e.g.
+  `@voxel51/panels/similarity_search`)
+- **Model evaluation** — "evaluate model", "evaluation info", "evaluation
+  scenario" (e.g. `@voxel51/evaluation/evaluate_model`)
 - **Data Quality** — "data quality scan", "blurriness", "brightness", "aspect
-  ratio", "entropy", "near duplicates"
-- **Auto-Labeling** — "auto label", "zoo models for labeling"
-- **Agentic Labeling** — "agentic labeler run", "agentic labeler agent", "agentic
-  labeler test"
-- **Annotation (CVAT/Labelbox etc.)** — "request annotations", "annotation info"
-- **Zoo models** — "load zoo dataset", "apply zoo model"
-- **Label schemas** — "label schema doc", "label schema attributes"
+  ratio", "entropy", "near duplicates" (e.g. `@voxel51/panels/dq_init_run`)
+- **Auto-Labeling** — "auto label", "zoo models for labeling" (e.g.
+  `@voxel51/panels/al_init_run`)
+- **Agentic Labeling** — "agentic labeler run", "agentic labeler agent",
+  "agentic labeler test" (e.g. `@voxel51/agentic-labeler/run_labeling`)
+- **Annotation (CVAT/Labelbox etc.)** — "request annotations", "annotation
+  info" (e.g. `@voxel51/annotation/request_annotations`)
+- **Zoo models** — "load zoo dataset", "apply zoo model" (e.g.
+  `@voxel51/zoo/apply_zoo_model`)
+- **Label schemas** — "label schema doc", "label schema attributes" (e.g.
+  `@voxel51/label-schemas/get_label_schema_doc`)
 - **Workflows (multi-stage pipelines)** — "create workflow", "run workflow",
-  "workflow stage". A workflow is built from 25+ `*_stage` operators (e.g. filter
-  labels, match tags, model, auto-label, review) — the visual canvas for building
-  one is browser-only, but creating and running a workflow through these operators
-  directly works the same either way.
-- **Dashboard** — "configure plot", "dashboard". Configuring a chart's data works
+  "workflow stage" (e.g. `@voxel51/workflows/create_workflow`). A workflow is
+  built from 25+ `*_stage` operators (e.g. filter labels, match tags, model,
+  auto-label, review) — the visual canvas for building one is browser-only,
+  but creating and running a workflow through these operators directly works
+  the same either way.
+- **Dashboard** — "configure plot", "dashboard" (e.g.
+  `@voxel51/dashboard/configure_plot`). Configuring a chart's data works
   headlessly; watching it render doesn't apply here.
 
 ## Known gotchas not visible from a search result or schema alone

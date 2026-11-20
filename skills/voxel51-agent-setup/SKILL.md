@@ -125,9 +125,10 @@ The five MCP tools (`list_operators`, `get_operator_schema`, `execute_operator`,
 `list_delegated_operations`, `get_delegated_operation`) are generic — they reach
 whatever FiftyOne operator you name. The operator catalog behind them is large
 (typically hundreds, varying by deployment and the connected user's own
-permissions). If your client supports it, this gateway also sends a short set
-of usage conventions automatically on connection (MCP's `initialize.instructions`)
-— the steps below go further than that, especially the `references/` files.
+permissions). If your client supports it, and the deployment's gateway is on
+a recent enough build, it also sends a short set of usage conventions
+automatically on connection (MCP's `initialize.instructions`) — the steps
+below go further than that regardless, especially the `references/` files.
 
 1. **Search first: `list_operators(query=...)`.** It's live, permission-filtered,
    ranked by relevance, and every result includes its own description — e.g.
@@ -135,8 +136,11 @@ of usage conventions automatically on connection (MCP's `initialize.instructions
    this alone narrows hundreds of operators down to a handful of real,
    currently-installed candidates. Many individual operators still have no
    description written by their author, so a vague query can only rank on
-   name/label — if nothing useful comes back, move to the matching
-   `references/` file below instead of guessing.
+   name/label — if nothing useful comes back, retry with broader or different
+   keywords (try the plugin name, e.g. `query="brain"` or `query="workflows"`)
+   before concluding it isn't there; the matching `references/` file below has
+   one example operator per area as a starting anchor, plus the gotchas a
+   search result won't show you.
 2. **Use `references/` for what a search result can't show you — operational
    gotchas and multi-step context, not operator inventories:**
    - [`references/datasets-and-samples.md`](references/datasets-and-samples.md) —
